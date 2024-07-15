@@ -6,7 +6,7 @@ fn main() {
     main_menu()
 }
 
-fn logo_print() {
+fn logo_print() { //Prints the logo
     println!("          _                      _            ");
     println!("         (_)                    | |           ");
     println!("__      ___ _ __ ___  _ __    __| | _____   __");
@@ -34,5 +34,5 @@ fn show_tasks() {//used to show the tasks
 }
 
 fn help_menu() {
-    println!("")
+    println!("Commands")
 }
