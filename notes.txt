@@ -1,0 +1,25 @@
+CLI Project to do task tracking for my daily tasks 
+
+Trackable items:
+ - Task name
+ - task details
+ - stakeholder
+ - due date
+ - date created
+ - current state (Pending, in progress, bumped, finished)
+
+ One view will show an overview of all tasks with the ability to see details about individual tasks
+ one view to add new tasks and to edit existing tasks
+
+ Start with basic features and work up to using ratatui for a cli using
+
+ Tasks:
+ 1.create a main menu
+ 2. work on input
+ 3. display details of tasks
+ 4. saving tasks to json file
+ 5. viewing details of tasks
+ 6. editing existing items
+ 7. removing completed tasks based on state
+ 7. proper UI using ratatui
+ 
