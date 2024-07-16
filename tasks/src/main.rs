@@ -55,7 +55,7 @@ fn help_menu() {
     logo_print();
     println!("\nLetMeKnow Version 0.0.1 Windows Build\nThese commands have been defined internally. Type 'Help' at anytime to see this list.");
     println!("\nAdd\n     Allows the user to add an aditional task to the list");
-    println!("\Edit\n     Allows a user to edit an existing task");
+    println!("\nEdit\n     Allows a user to edit an existing task");
     println!("\nExit\n     Quits the program");
     println!("\nDetails\n     Navigates to a specific task to get additional information");
 }
