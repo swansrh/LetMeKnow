@@ -3,6 +3,7 @@ use std::path::Path;
 use std::fs::File;
 use serde::Deserialize;
 
+#[derive(Debug, Deserialize)]
 struct Task { //struct for the task details will be used for reading and writing to json file
     task_id: String,
     task_name: String,
@@ -61,6 +62,10 @@ fn show_tasks() {//used to show the tasks
     let data_file = File::open(json_file_path).expect("File not found"); //opens the json file
 
     let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
+
+    for lines in tasks {
+        println!("SOMETHING");
+    }
 
     //println!("\nSee current tasks below: \n"); //below this is all for debugging
     //for i in 1..10{
