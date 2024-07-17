@@ -1,4 +1,17 @@
 use std::io;
+use std::path::Path;
+use std::fs::File;
+use serde::Deserialize;
+
+struct Task { //struct for the task details will be used for reading and writing to json file
+    task_id: String,
+    task_name: String,
+    task_details: String,
+    stake_holder: String,
+    due_date: String,
+    date_created: String,
+    state: String
+}
 
 fn main() {
     logo_print(); //prints the logo at the begining of the script
@@ -44,11 +57,15 @@ fn get_input() -> String{
 }
 
 fn show_tasks() {//used to show the tasks
+    let json_file_path = Path::new("./data.json"); //file path of json
+    let data_file = File::open(json_file_path).expect("File not found"); //opens the json file
 
-    println!("\nSee current tasks below: \n");
-    for i in 1..10{
-        println!("SICK TASK NUMBER: {}", i);
-    }
+    let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
+
+    //println!("\nSee current tasks below: \n"); //below this is all for debugging
+    //for i in 1..10{
+    //    println!("SICK TASK NUMBER: {}", i);
+    //}
 }
 
 fn help_menu() {
