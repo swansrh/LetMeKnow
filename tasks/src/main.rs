@@ -1,7 +1,7 @@
 use std::io;
 
 fn main() {
-    logo_print();
+    logo_print(); //prints the logo at the begining of the script
     show_tasks();
     main_menu();
 }
