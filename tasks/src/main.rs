@@ -2,6 +2,7 @@ use std::io;
 use std::path::Path;
 use std::fs::File;
 use serde::Deserialize;
+use std::env;
 
 #[derive(Debug, Deserialize)]
 struct Task { //struct for the task details will be used for reading and writing to json file
@@ -58,11 +59,15 @@ fn get_input() -> String{
 }
 
 fn show_tasks() {//used to show the tasks
-    let json_file_path = Path::new("./data.json"); //file path of json
+    //let path = env::current_dir().expect("FAILED TO GET"); //gets CWD 
+    //println!("The current directory is {}", path.display()); //Prints current CWD to console
+    
+    let json_file_path = Path::new("fakeData.json"); //file path of json
+    
     let data_file = File::open(json_file_path).expect("File not found"); //opens the json file
-
+    println!("HERE");//debugging
     let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
-
+    
     for lines in tasks {
         println!("SOMETHING");
     }
