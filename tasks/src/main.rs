@@ -2,7 +2,6 @@ use std::io;
 use std::path::Path;
 use std::fs::File;
 use serde::Deserialize;
-use std::env;
 
 #[derive(Debug, Deserialize)]
 struct Task { //struct for the task details will be used for reading and writing to json file
@@ -31,6 +30,8 @@ fn main_menu() {
     match user_input.as_str(){
         "Help" => help_menu(),
         "help" => help_menu(),
+        "Show" => show_tasks(),
+        "show" => show_tasks(),
         "Edit" => println!("Edit a task"),
         "edit" => println!("Edit a task"),
         "Detail" => println!("Detail view"),
@@ -41,7 +42,7 @@ fn main_menu() {
         "Q" => break,
         _ => println!("Please input a valid option. Type 'Help' for a list of available commands."),
     }
-    }// while loop end
+    }// loop end
 }
 
 fn get_input() -> String{
@@ -50,34 +51,41 @@ fn get_input() -> String{
     
     if s.ends_with("\n") { //these statements remove the newline characters at the end of the string
         s.pop();
-        //println!("Removed1"); //used for debug
         if s.ends_with("\r") {
             s.pop();
-            //println!("Removed2"); //used for debug
         }
     }
     return s;
 }
 
 fn show_tasks() {//used to show the tasks
-    //let path = env::current_dir().expect("FAILED TO GET"); //gets CWD 
-    //println!("The current directory is {}", path.display()); //Prints current CWD to console
     
+    
+    println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
+    let tasks:Vec<Task> = read_json();
+    
+    for lines in tasks {
+        println!("{} | {} | {} | {}", lines.task_id, lines.task_name, lines.state, lines.due_date);
+    }
+}
+
+fn read_json() -> Vec<Task> {
     let json_file_path = Path::new("fakeData.json"); //file path of json
     
     let data_file = File::open(json_file_path).expect("File not found"); //opens the json file
     println!("HERE");//debugging
     let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
-    
-    println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
-    for lines in tasks {
-        println!("{}", lines.task_id);
-    }
+    tasks
+}
+
+fn show_details() {//shows the details of the 
+
 }
 
 fn help_menu() {
     logo_print();
     println!("\nLetMeKnow Version 0.0.1 Windows Build\nThese commands have been defined internally. Type 'Help' at anytime to see this list.");
+    println!("\nShow\n    Shows the user currently active tasks");
     println!("\nAdd\n     Allows the user to add an aditional task to the list");
     println!("\nEdit\n     Allows a user to edit an existing task");
     println!("\nExit\n     Quits the program");
