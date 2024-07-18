@@ -1,0 +1,7 @@
+[
+    {"task_id":"0001","task_name":"Create JSON", "task_details":"Need to create a JSON format for storing information", "stake_holder":"Rhys Swansbra", "due_date":"17-07-2024","date_created":"17-07-2024","state":"In Progress"},
+    {"task_id":"0002","task_name":"Display Json", "task_details":"Json needs to be read and then printed to CLI", "stake_holder":"Rhys Swansbra", "due_date":"17-07-2024","date_created":"17-07-2024","state":"In Progress"},
+    {"task_id":"0003","task_name":"Store Data", "task_details":"Write data to the json file for keeping", "stake_holder":"Rhys Swansbra", "due_date":"18-07-2024","date_created":"17-07-2024","state":"Queue"},
+    {"task_id":"0004","task_name":"Edit Json", "task_details":"Identify an existing task and edit its details", "stake_holder":"Rhys Swansbra", "due_date":"18-07-2024","date_created":"17-07-2024","state":"In Progress"},
+    {"task_id":"0005","task_name":"Detail View", "task_details":"Look at the details of a task", "stake_holder":"Rhys Swansbra", "due_date":"19-07-2024","date_created":"17-07-2024","state":"In Progress"}
+]

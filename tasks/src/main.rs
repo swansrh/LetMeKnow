@@ -71,7 +71,7 @@ fn show_tasks() {//used to show the tasks
     
     println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
     for lines in tasks {
-        println!("YES");
+        println!("{}", lines.task_id);
     }
 }
 
