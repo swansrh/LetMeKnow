@@ -59,8 +59,6 @@ fn get_input() -> String{
 }
 
 fn show_tasks() {//used to show the tasks
-    
-    
     println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
     let tasks:Vec<Task> = read_json();
     
@@ -79,7 +77,14 @@ fn read_json() -> Vec<Task> {
 }
 
 fn show_details() {//shows the details of the 
-
+    println!("Which task would you like to see in detail? (Press Q to go back)");
+    let user_input = get_input();//user input
+    
+    match user_input.as_str(){ //checks user input to deterimine next action
+        "q" => println!("Cancelled"),
+        "Q" => println!("Cancelled"),
+        _ => println!("Not a valid input")
+    }
 }
 
 fn help_menu() {
