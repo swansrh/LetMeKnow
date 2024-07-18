@@ -34,8 +34,8 @@ fn main_menu() {
         "show" => show_tasks(),
         "Edit" => println!("Edit a task"),
         "edit" => println!("Edit a task"),
-        "Detail" => println!("Detail view"),
-        "detail" => println!("Detail view"),
+        "Detail" => show_details(),
+        "detail" => show_details(),
         "Exit" => break,
         "exit" => break,
         "q" => break,
@@ -71,7 +71,7 @@ fn read_json() -> Vec<Task> {
     let json_file_path = Path::new("fakeData.json"); //file path of json
     
     let data_file = File::open(json_file_path).expect("File not found"); //opens the json file
-    println!("HERE");//debugging
+    //println!("HERE");//debugging
     let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
     tasks
 }
@@ -83,7 +83,17 @@ fn show_details() {//shows the details of the
     match user_input.as_str(){ //checks user input to deterimine next action
         "q" => println!("Cancelled"),
         "Q" => println!("Cancelled"),
-        _ => println!("Not a valid input")
+        _ => check_matching_task(),
+    }
+}
+
+fn check_matching_task(input: String){
+    let data:Vec<Task> = read_json();
+
+    for lines in data{
+        if lines.task_id.as_str() == input.as_str(){
+            println!("Task ID: {} \nTask: {}\n Details: {}\nStake Holder: {}\nDate Created: {}\n Date Due: {}\n Current State:  {}", lines.task_id, lines.task_name, lines.task_details, lines.stake_holder, lines.date_created, lines.due_date, lines.stake_holder);
+        }
     }
 }
 
