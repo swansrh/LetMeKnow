@@ -38,6 +38,7 @@ fn main_menu() {
         "Exit" => break,
         "exit" => break,
         "q" => break,
+        "Q" => break,
         _ => println!("Please input a valid option. Type 'Help' for a list of available commands."),
     }
     }// while loop end
@@ -68,14 +69,10 @@ fn show_tasks() {//used to show the tasks
     println!("HERE");//debugging
     let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
     
+    println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
     for lines in tasks {
-        println!("SOMETHING");
+        println!("YES");
     }
-
-    //println!("\nSee current tasks below: \n"); //below this is all for debugging
-    //for i in 1..10{
-    //    println!("SICK TASK NUMBER: {}", i);
-    //}
 }
 
 fn help_menu() {
