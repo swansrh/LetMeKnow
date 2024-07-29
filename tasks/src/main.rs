@@ -89,11 +89,17 @@ fn show_details() {//shows the details of the
 
 fn check_matching_task(input: String){
     let data:Vec<Task> = read_json();
-
+    let mut is_matching = false;
+    
     for lines in data{
         if lines.task_id.as_str() == input.as_str(){
             println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", lines.task_id, lines.task_name, lines.task_details, lines.stake_holder, lines.date_created, lines.due_date, lines.stake_holder);
+            is_matching = true;
         }
+    }
+
+    if is_matching == false {
+        println!("\nNo Matching task ID was found.")
     }
 }
 
