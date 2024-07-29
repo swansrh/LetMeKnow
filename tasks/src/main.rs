@@ -83,7 +83,7 @@ fn show_details() {//shows the details of the
     match user_input.as_str(){ //checks user input to deterimine next action
         "q" => println!("Cancelled"),
         "Q" => println!("Cancelled"),
-        _ => check_matching_task(),
+        _ => check_matching_task(user_input), //need to feed this is a string so that the matching task can do pattern matching
     }
 }
 
@@ -92,7 +92,7 @@ fn check_matching_task(input: String){
 
     for lines in data{
         if lines.task_id.as_str() == input.as_str(){
-            println!("Task ID: {} \nTask: {}\n Details: {}\nStake Holder: {}\nDate Created: {}\n Date Due: {}\n Current State:  {}", lines.task_id, lines.task_name, lines.task_details, lines.stake_holder, lines.date_created, lines.due_date, lines.stake_holder);
+            println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", lines.task_id, lines.task_name, lines.task_details, lines.stake_holder, lines.date_created, lines.due_date, lines.stake_holder);
         }
     }
 }
