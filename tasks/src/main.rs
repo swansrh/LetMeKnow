@@ -1,3 +1,4 @@
+use core::task;
 use std::io;
 use std::path::Path;
 use std::fs::File;
@@ -35,7 +36,10 @@ fn main_menu() {
         "Edit" => println!("Edit a task"),
         "edit" => println!("Edit a task"),
         "Detail" => show_details(),
+        "Details" => show_details(),
+        "details" => show_details(),
         "detail" => show_details(),
+        "remove" => remove_task(),
         "Exit" => break,
         "exit" => break,
         "q" => break,
@@ -70,7 +74,7 @@ fn show_tasks() {//used to show the tasks
 fn read_json() -> Vec<Task> {
     let json_file_path = Path::new("fakeData.json"); //file path of json
     
-    let data_file = File::open(json_file_path).expect("File not found"); //opens the json file
+    let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
     //println!("HERE");//debugging
     let tasks:Vec<Task> = serde_json::from_reader(data_file).expect("Error while reading data.json");
     tasks
@@ -83,7 +87,7 @@ fn show_details() {//shows the details of the
     match user_input.as_str(){ //checks user input to deterimine next action
         "q" => println!("Cancelled"),
         "Q" => println!("Cancelled"),
-        _ => check_matching_task(user_input), //need to feed this is a string so that the matching task can do pattern matching
+        _ => check_matching_task(user_input), //Takes string and feeds it to the matching function to return a task and its details
     }
 }
 
@@ -102,6 +106,66 @@ fn check_matching_task(input: String){
         println!("\nNo Matching task ID was found.")
     }
 }
+
+
+
+fn remove_task (){ //This is for removing tasks from the list and saving that list over the original list
+    let mut data:Vec<Task> = read_json(); //reads the json file and returns the struct
+
+    println!("Please input the task ID you would like to remove (Press Q to go back)");
+    let user_input = get_input();//user input
+
+    match user_input.as_str(){ //checks user input to deterimine next action
+        "q" => println!("Cancelled"),
+        "Q" => println!("Cancelled"),
+        _ => check_for_removal(&user_input, data), //Takes string and feeds it to the matching function to return a task and its details
+    }
+}
+
+fn check_for_removal(input: &String, mut data: Vec<Task>){
+    let task_exists = check_if_task_exists(&input);
+
+    if task_exists == true {
+        println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
+        data.remove(return_task_index(&input)); //current error, needs usize
+        //write to file here
+
+    }else{
+        println!("Task does not exist"); //Let's the user know the task does not exist and returns them to the main menu
+    }
+}
+
+fn return_task_index(input: &String) -> usize{ //needs to return int 32 that is the index of the task in the vector
+    let data_test:Vec<Task> = read_json(); //reads the json file and returns the struct HERE FOR TESTING
+    let mut index_of_task = 0;
+
+    for lines in data_test{
+        if lines.task_id.as_str() == input.as_str(){
+        return index_of_task
+        }
+    index_of_task += 1;
+    }
+
+    index_of_task
+}
+
+fn check_if_task_exists (input: &String) -> bool{
+    let data:Vec<Task> = read_json();
+    let mut is_matching = false;
+    
+    for lines in data{
+        if lines.task_id.as_str() == input.as_str(){
+            is_matching = true;
+        }
+    }
+
+    if is_matching == false {
+        println!("\nNo Matching task ID was found.")
+    }
+    is_matching
+}
+
+
 
 fn help_menu() {
     logo_print();
