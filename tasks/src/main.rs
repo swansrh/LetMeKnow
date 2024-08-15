@@ -3,8 +3,9 @@ use std::io;
 use std::path::Path;
 use std::fs::File;
 use serde::Deserialize;
+use serde::Serialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Task { //struct for the task details will be used for reading and writing to json file
     task_id: String,
     task_name: String,
@@ -107,7 +108,7 @@ fn check_matching_task(input: String){
     }
 }
 
-
+//************************************************************************************************************************************************************
 
 fn remove_task (){ //This is for removing tasks from the list and saving that list over the original list
     let mut data:Vec<Task> = read_json(); //reads the json file and returns the struct
@@ -127,7 +128,11 @@ fn check_for_removal(input: &String, mut data: Vec<Task>){
 
     if task_exists == true {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
-        data.remove(return_task_index(&input)); //current error, needs usize
+        data.remove(return_task_index(&input)); //This succsesfully deletes the task from the Vector. Needs to be rewritten back to the JSON file
+        
+        let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
+        //println!("JSON created by SERDE: /n{}", json_converted);//debugging, printing the json to console
+        
         //write to file here
 
     }else{
@@ -165,7 +170,7 @@ fn check_if_task_exists (input: &String) -> bool{
     is_matching
 }
 
-
+//************************************************************************************************************************************************************
 
 fn help_menu() {
     logo_print();
