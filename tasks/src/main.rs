@@ -1,4 +1,3 @@
-use core::task;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
@@ -47,15 +46,22 @@ fn main_menu() {
             "Remove" => remove_task(),
             "delete" => remove_task(),
             "Delete" => remove_task(),
+            "add" => add_task(),
+            "Add" => add_task(),
             "Exit" => break,
             "exit" => break,
             "q" => break,
             "Q" => break,
+            "" => println!("Silly goose, you have to input something"),
             _ => println!(
                 "Please input a valid option. Type 'Help' for a list of available commands."
             ),
         }
     } // loop end
+}
+
+fn add_task() {// create a new task and append it to the JSON file "fakeData.json"
+    println!("This will add a new task");
 }
 
 fn get_input() -> String {
@@ -126,7 +132,7 @@ fn check_matching_task(input: String) {
 
 fn remove_task() {
     //This is for removing tasks from the list and saving that list over the original list
-    let mut data: Vec<Task> = read_json(); //reads the json file and returns the struct
+    let data: Vec<Task> = read_json(); //reads the json file and returns the struct
 
     println!("Please input the task ID you would like to remove (Press Q to go back)");
     let user_input = get_input(); //user input
@@ -141,14 +147,14 @@ fn remove_task() {
 
 fn check_for_removal(input: &String, mut data: Vec<Task>) {
     let task_exists = check_if_task_exists(&input);
-    let filePath: &str = "./fakeData.json";
+    let file_path: &str = "./fakeData.json";
 
     if task_exists == true {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
         data.remove(return_task_index(&input)); //This succsesfully deletes the task from the Vector. Needs to be rewritten back to the JSON file
 
         let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
-        overwrite_existing(json_converted, filePath); //this function saves to file
+        overwrite_existing(json_converted, file_path); //this function saves to file
     } else {
         println!("Task does not exist"); //Let's the user know the task does not exist and returns them to the main menu
     }
@@ -184,15 +190,14 @@ fn check_if_task_exists(input: &String) -> bool {
     is_matching
 }
 
-fn overwrite_existing(serialized_json: String, filePath: &str) {
-    //add input that is the file that will be opened.
+fn overwrite_existing(serialized_json: String, file_path: &str) {
     
     let mut f = OpenOptions::new()
         .write(true)
         .truncate(true)
-        .open(filePath)
+        .open(file_path)
         .unwrap();
-    f.write_all(&serialized_json.as_bytes());
+    let _ = f.write_all(&serialized_json.as_bytes());
 }
 
 fn help_menu() {
