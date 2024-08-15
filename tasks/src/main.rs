@@ -141,14 +141,14 @@ fn remove_task() {
 
 fn check_for_removal(input: &String, mut data: Vec<Task>) {
     let task_exists = check_if_task_exists(&input);
+    let filePath: &str = "./fakeData.json";
 
     if task_exists == true {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
         data.remove(return_task_index(&input)); //This succsesfully deletes the task from the Vector. Needs to be rewritten back to the JSON file
 
         let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
-        //println!("JSON created by SERDE: /n{}", json_converted);//debugging, printing the json to console
-        overwrite_existing(json_converted); //this function saves to file
+        overwrite_existing(json_converted, filePath); //this function saves to file
     } else {
         println!("Task does not exist"); //Let's the user know the task does not exist and returns them to the main menu
     }
@@ -165,7 +165,6 @@ fn return_task_index(input: &String) -> usize {
         }
         index_of_task += 1;
     }
-
     index_of_task
 }
 
@@ -185,13 +184,14 @@ fn check_if_task_exists(input: &String) -> bool {
     is_matching
 }
 
-fn overwrite_existing(serialized_json: String) {
+fn overwrite_existing(serialized_json: String, filePath: &str) {
+    //add input that is the file that will be opened.
+    
     let mut f = OpenOptions::new()
         .write(true)
         .truncate(true)
-        .open("./fakeData.json")
+        .open(filePath)
         .unwrap();
-
     f.write_all(&serialized_json.as_bytes());
 }
 
@@ -204,7 +204,6 @@ fn help_menu() {
     println!("\nEdit\n     Allows a user to edit an existing task");
     println!("\nRemove\n     Remopoves an existing task from the list");
     println!("\nExit\n     Quits the program");
-    
 }
 
 fn logo_print() {
