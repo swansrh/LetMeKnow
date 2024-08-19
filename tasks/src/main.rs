@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use serde::Serialize;
-use std::default;
+//use std::default;
 //use serde_json::from_str;
 use std::fs;
 use std::fs::File;
@@ -85,6 +85,17 @@ fn add_task() {// create a new task and append it to the JSON file "fakeData.jso
     let mut temp_inputs = Task{task_id: new_id.to_string(), ..Default::default()};
 
     //create a loop that runs four times. Each loop has to an input for a new variable
+
+    for n in 1..5 {
+        println!("Current Loop: {}", n);
+        match n {
+            1 => println!("This is for use case 1"), //make the variable we want = a function
+            2 => println!("This is for use case 2"),
+            3 => println!("This is for use case 3"),
+            4 => println!("This is for use case 4"),
+            _ => println!("This is for use case nothing")
+        }
+    }
 }
 
 fn get_input() -> String {
