@@ -83,6 +83,7 @@ fn main_menu() {
 }
 
 fn add_task() {
+    //******************          ADD FUNCTIONS        ****************************************************************************************************************
     // create a new task and append it to the JSON file "fakeData.json"
     let mut tasks: Vec<Task> = read_json();
     let mut temp_inputs = Task {
@@ -184,6 +185,7 @@ fn get_input() -> String {
 }
 
 fn show_tasks() {
+    //******************          SHOW FUNCTIONS        ****************************************************************************************************************
     //used to show the tasks
     println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
     let tasks: Vec<Task> = read_json();
@@ -235,6 +237,7 @@ fn check_matching_task(input: String) {
 }
 
 fn remove_task() {
+    //******************          REMOVE FUNCTIONS        ****************************************************************************************************************
     //This is for removing tasks from the list and saving that list over the original list
     let data: Vec<Task> = read_json(); //reads the json file and returns the struct
 
@@ -304,6 +307,7 @@ fn overwrite_existing(text_to_write: String, file_path: &str) {
 }
 
 fn help_menu() {
+    //******************          HELP MENU        ****************************************************************************************************************
     logo_print();
     println!("\nLetMeKnow Version 0.0.1 Windows Build\nThese commands have been defined internally. Type 'Help' at anytime to see this list.");
     println!("\nShow\n    Shows the user currently active tasks");
@@ -314,16 +318,19 @@ fn help_menu() {
     println!("\nExit\n     Quits the program");
 }
 
-fn create_backup(){
+fn create_backup() {
+    //******************          BACKUP FUNCTIONS        ****************************************************************************************************************
     let tasks: Vec<Task> = read_json();
     let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
     create_new(json_converted);
-
 }
 
-fn create_new(write_to_file: String){ //creates a new file and saves json to it
-    let mut file = File::create("./backup.json").expect("Could not create backup file. Terminating");
-    file.write_all(write_to_file.as_bytes()).expect("Could not write to backup file. Terminating. Please delete existing backup");
+fn create_new(write_to_file: String) {
+    //creates a new file and saves json to it
+    let mut file =
+        File::create("./backup.json").expect("Could not create backup file. Terminating");
+    file.write_all(write_to_file.as_bytes())
+        .expect("Could not write to backup file. Terminating. Please delete existing backup");
 }
 
 fn delete_file(file_path: String) {
@@ -331,6 +338,7 @@ fn delete_file(file_path: String) {
 }
 
 fn logo_print() {
+    //******************          LOGO        ****************************************************************************************************************************************
     //Prints the logo
     println!("          _                      _            ");
     println!("         (_)                    | |           ");
