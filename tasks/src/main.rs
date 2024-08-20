@@ -72,15 +72,12 @@ fn main_menu() {
 }
 
 fn add_task() {// create a new task and append it to the JSON file "fakeData.json"
-    let mut data: Vec<Task> = read_json();
-    println!("This will add a new task"); //place holder while I program the actual sections
-    let offset = FixedOffset::east_opt(10 * 60 * 60).unwrap();
-    let dt = chrono::Utc::now().with_timezone(&offset); //gets current date time in UTC +10 (Australia). Change the first nmer in the secs to the utc offset
+    let offset = FixedOffset::east_opt(10 * 60 * 60).unwrap(); //date time offset for chrono
+    let dt = chrono::Utc::now().with_timezone(&offset); //gets current date time in UTC +10 (Australia). Change the first # in the secs to the utc offset
 
     let count_content = fs::read_to_string("./count.txt").expect("Unable to read the file"); //reads the existing counter and parses it to an INT for manuipulation
     let mut new_id: i32 = count_content.parse().expect("Could not convert nummber to an integer"); //this will be changed later to the new latest id and saved back to the count.txt file
     new_id +=1;
-    //println!("Latest ID is: {}", new_id); //debugging
     let mut temp_inputs = Task{task_id: new_id.to_string(), date_created: dt.to_string(), state: "Created".to_string() ,..Default::default()};
 
     for n in 1..5 {
@@ -98,32 +95,40 @@ fn add_task() {// create a new task and append it to the JSON file "fakeData.jso
     println!("Please see your new task details below:");
     println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", temp_inputs.task_id, temp_inputs.task_name, temp_inputs.task_details, temp_inputs.stake_holder, temp_inputs.date_created, temp_inputs.due_date, temp_inputs.state);
 
+    println!("Would you like to save this task?");
+    let confirm = get_input();
+
+
 
 
 }
 
 fn add_input(input_for: String) -> String{//gets input from user and returns the value to be saved against the temp struct in the add_task() function
-    println!("Please input the {}", input_for);
-    let user_input =  get_input();
-    println!("User Input is '{}'", user_input);
-
-    //Need error checking to see if the task name is empty. The only one that can be empty is the description
-
-    user_input
+        println!("Please input the {}", input_for);
+        let user_input =  get_input();
+        //println!("User Input is '{}'", user_input); //debugging
+        user_input
 }
 
 fn get_input() -> String {
-    let mut s: String = String::new();
-    io::stdin().read_line(&mut s).expect("Failed to read line");
+    loop{
+        let mut s: String = String::new();
+        io::stdin().read_line(&mut s).expect("Failed to read line");
 
-    if s.ends_with("\n") {
-        //these statements remove the newline characters at the end of the string
-        s.pop();
-        if s.ends_with("\r") {
+        if s.ends_with("\n") {
+            //these statements remove the newline characters at the end of the string
             s.pop();
+            if s.ends_with("\r") {
+                s.pop();
+            }
+        }
+
+        if s.is_empty(){ //checking if the input is empty or not. No error checking on type
+            println!("Input cannot be empty");
+        }else{
+            return s
         }
     }
-    return s;
 }
 
 fn show_tasks() {
