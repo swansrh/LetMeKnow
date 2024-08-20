@@ -43,6 +43,7 @@ fn main() {
     logo_print(); //prints the logo at the begining of the script
     show_tasks();
     main_menu();
+    delete_file("./backup.json".to_string());
 }
 
 fn main_menu() {
@@ -323,6 +324,10 @@ fn create_backup(){
 fn create_new(write_to_file: String){ //creates a new file and saves json to it
     let mut file = File::create("./backup.json").expect("Could not create backup file. Terminating");
     file.write_all(write_to_file.as_bytes()).expect("Could not write to backup file. Terminating. Please delete existing backup");
+}
+
+fn delete_file(file_path: String) {
+    fs::remove_file(file_path).expect("Could not remove file.")
 }
 
 fn logo_print() {
