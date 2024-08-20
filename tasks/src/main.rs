@@ -1,3 +1,5 @@
+use chrono::offset;
+use chrono::FixedOffset;
 use serde::Deserialize;
 use serde::Serialize;
 //use std::default;
@@ -8,6 +10,7 @@ use std::fs::OpenOptions;
 use std::io;
 use std::io::Write;
 use std::path::Path;
+use chrono;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Task {
@@ -23,7 +26,7 @@ struct Task {
 
 impl Default for Task { //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
     fn default() -> Task {
-        Task{task_id: "Task ID".to_string(), task_name: "Task Name".to_string(), task_details: "Additional Details".to_string(), stake_holder: "Stake Holders".to_string(),due_date: "Date Due".to_string(), date_created: "Todays Date".to_string(),state: "Current State".to_string()}
+        Task{task_id: "Task ID".to_string(), task_name: "Task Name".to_string(), task_details: "Additional Details".to_string(), stake_holder: "Stake Holders".to_string(),due_date: "Date Due".to_string(), date_created: "Date Due".to_string(),state: "Current State".to_string()}
     }
 }
 fn main() {
@@ -71,35 +74,46 @@ fn main_menu() {
 fn add_task() {// create a new task and append it to the JSON file "fakeData.json"
     let mut data: Vec<Task> = read_json();
     println!("This will add a new task"); //place holder while I program the actual sections
+    let offset = FixedOffset::east_opt(10 * 60 * 60).unwrap();
+    let dt = chrono::Utc::now().with_timezone(&offset); //gets current date time in UTC +10 (Australia). Change the first nmer in the secs to the utc offset
 
-    //read the new ID and note the new ID. Do not save the new ID until the task has actually been created
-
-    //read the existing data file
-    //loop through all the items in the Task struct (except the ID) and record user input for all of them. Some can be empty but not all
-    //Once done, save new list to the ddata.jsonm file and save the new ID to the count.txt file
-
-    let count_content = fs::read_to_string("./count.txt").expect("Unable to read the file");    //reads the existing counter and parses it to an INT for manuipulation
-    let mut new_id: i32 = count_content.parse().expect("Could not convert nummber to an integer"); //thi will be changed later to the new latest id and saved back to the count.txt file
+    let count_content = fs::read_to_string("./count.txt").expect("Unable to read the file"); //reads the existing counter and parses it to an INT for manuipulation
+    let mut new_id: i32 = count_content.parse().expect("Could not convert nummber to an integer"); //this will be changed later to the new latest id and saved back to the count.txt file
     new_id +=1;
     //println!("Latest ID is: {}", new_id); //debugging
-    let mut temp_inputs = Task{task_id: new_id.to_string(), ..Default::default()};
-
-    //create a loop that runs four times. Each loop has to an input for a new variable
+    let mut temp_inputs = Task{task_id: new_id.to_string(), date_created: dt.to_string(), state: "Created".to_string() ,..Default::default()};
 
     for n in 1..5 {
         println!("Current Loop: {}", n);
         match n {
-            1 => println!("This is for use case 1"), //make the variable we want = a function
-            2 => println!("This is for use case 2"),
-            3 => println!("This is for use case 3"),
-            4 => println!("This is for use case 4"),
+            1 => temp_inputs.task_name = add_input("task name".to_string()), //make the variable we want = a function
+            2 => temp_inputs.task_details = add_input("task details".to_string()),
+            3 => temp_inputs.due_date = add_input("due date".to_string()),
+            4 => temp_inputs.stake_holder = add_input("the main stake holder".to_string()),
             _ => println!("This is for use case nothing")
         }
     }
+
+    //print the task and ask if the user wants to go forth
+    println!("Please see your new task details below:");
+    println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", temp_inputs.task_id, temp_inputs.task_name, temp_inputs.task_details, temp_inputs.stake_holder, temp_inputs.date_created, temp_inputs.due_date, temp_inputs.state);
+
+
+
+}
+
+fn add_input(input_for: String) -> String{//gets input from user and returns the value to be saved against the temp struct in the add_task() function
+    println!("Please input the {}", input_for);
+    let user_input =  get_input();
+    println!("User Input is '{}'", user_input);
+
+    //Need error checking to see if the task name is empty. The only one that can be empty is the description
+
+    user_input
 }
 
 fn get_input() -> String {
-    let mut s = String::new();
+    let mut s: String = String::new();
     io::stdin().read_line(&mut s).expect("Failed to read line");
 
     if s.ends_with("\n") {
