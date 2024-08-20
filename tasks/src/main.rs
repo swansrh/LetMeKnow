@@ -1,16 +1,16 @@
-use chrono::offset;
+//use chrono::offset;
 use chrono::FixedOffset;
 use serde::Deserialize;
 use serde::Serialize;
 //use std::default;
 //use serde_json::from_str;
+use chrono;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::Write;
 use std::path::Path;
-use chrono;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Task {
@@ -24,12 +24,22 @@ struct Task {
     state: String,
 }
 
-impl Default for Task { //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
+impl Default for Task {
+    //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
     fn default() -> Task {
-        Task{task_id: "Task ID".to_string(), task_name: "Task Name".to_string(), task_details: "Additional Details".to_string(), stake_holder: "Stake Holders".to_string(),due_date: "Date Due".to_string(), date_created: "Date Due".to_string(),state: "Current State".to_string()}
+        Task {
+            task_id: "Task ID".to_string(),
+            task_name: "Task Name".to_string(),
+            task_details: "Additional Details".to_string(),
+            stake_holder: "Stake Holders".to_string(),
+            due_date: "Date Due".to_string(),
+            date_created: "Date Due".to_string(),
+            state: "Current State".to_string(),
+        }
     }
 }
 fn main() {
+    create_backup();
     logo_print(); //prints the logo at the begining of the script
     show_tasks();
     main_menu();
@@ -71,47 +81,87 @@ fn main_menu() {
     } // loop end
 }
 
-fn add_task() {// create a new task and append it to the JSON file "fakeData.json"
-    let offset = FixedOffset::east_opt(10 * 60 * 60).unwrap(); //date time offset for chrono
-    let dt = chrono::Utc::now().with_timezone(&offset); //gets current date time in UTC +10 (Australia). Change the first # in the secs to the utc offset
-
-    let count_content = fs::read_to_string("./count.txt").expect("Unable to read the file"); //reads the existing counter and parses it to an INT for manuipulation
-    let mut new_id: i32 = count_content.parse().expect("Could not convert nummber to an integer"); //this will be changed later to the new latest id and saved back to the count.txt file
-    new_id +=1;
-    let mut temp_inputs = Task{task_id: new_id.to_string(), date_created: dt.to_string(), state: "Created".to_string() ,..Default::default()};
+fn add_task() {
+    // create a new task and append it to the JSON file "fakeData.json"
+    let mut tasks: Vec<Task> = read_json();
+    let mut temp_inputs = Task {
+        task_id: read_task_id(),
+        date_created: get_date_time(),
+        state: "Created".to_string(),
+        ..Default::default()
+    }; //default values set
 
     for n in 1..5 {
-        println!("Current Loop: {}", n);
         match n {
             1 => temp_inputs.task_name = add_input("task name".to_string()), //make the variable we want = a function
             2 => temp_inputs.task_details = add_input("task details".to_string()),
             3 => temp_inputs.due_date = add_input("due date".to_string()),
             4 => temp_inputs.stake_holder = add_input("the main stake holder".to_string()),
-            _ => println!("This is for use case nothing")
+            _ => println!("This is for use case nothing"),
         }
     }
 
     //print the task and ask if the user wants to go forth
-    println!("Please see your new task details below:");
+    println!("\nPlease see your new task details below:");
     println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", temp_inputs.task_id, temp_inputs.task_name, temp_inputs.task_details, temp_inputs.stake_holder, temp_inputs.date_created, temp_inputs.due_date, temp_inputs.state);
-
-    println!("Would you like to save this task?");
+    println!("\nWould you like to save this task?");
     let confirm = get_input();
 
+    let mut go_forth = false;
+    match confirm.as_str() {
+        "y" => go_forth = true,
+        "yes" => go_forth = true,
+        "okay" => go_forth = true,
+        "ok" => go_forth = true,
+        "Yes" => go_forth = true,
+        "Y" => go_forth = true,
+        "n" => println!("cancelling and returning to main menu"),
+        "N" => println!("cancelling and returning to main menu"),
+        "No" => println!("cancelling and returning to main menu"),
+        "no" => println!("cancelling and returning to main menu"),
+        "Nope" => println!("cancelling and returning to main menu"),
+        "nope" => println!("cancelling and returning to main menu"),
+        "NO" => println!("cancelling and returning to main menu"),
+        "NOPE" => println!("cancelling and returning to main menu"),
+        _ => println!("Please input something valid"),
+    }
 
-
-
+    if go_forth == true {
+        tasks.push(temp_inputs);
+        let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
+        overwrite_existing(json_converted, "./fakeData.json"); //this function saves to file
+        overwrite_existing(read_task_id(), "./count.txt");
+        println!("Task was saved")
+    }
 }
 
-fn add_input(input_for: String) -> String{//gets input from user and returns the value to be saved against the temp struct in the add_task() function
-        println!("Please input the {}", input_for);
-        let user_input =  get_input();
-        //println!("User Input is '{}'", user_input); //debugging
-        user_input
+fn get_date_time() -> String {
+    //gets the current date time of UTC +10
+    let offset = FixedOffset::east_opt(10 * 60 * 60).unwrap(); //date time offset for chrono
+    let dt = chrono::Utc::now().with_timezone(&offset); //gets current date time in UTC +10 (Australia). Change the first # in the secs to the utc offset
+    dt.to_string()
+}
+
+fn read_task_id() -> String {
+    //returns the next task id as a string
+    let count_content = fs::read_to_string("./count.txt").expect("Unable to read the file"); //reads the existing counter and parses it to an INT for manuipulation
+    let mut new_id: i32 = count_content
+        .parse()
+        .expect("Could not convert nummber to an integer"); //this will be changed later to the new latest id and saved back to the count.txt file
+    new_id += 1;
+    new_id.to_string()
+}
+
+fn add_input(input_for: String) -> String {
+    //gets input from user and returns the value to be saved against the temp struct in the add_task() function
+    println!("Please input the {}", input_for);
+    let user_input = get_input();
+    //println!("User Input is '{}'", user_input); //debugging
+    user_input
 }
 
 fn get_input() -> String {
-    loop{
+    loop {
         let mut s: String = String::new();
         io::stdin().read_line(&mut s).expect("Failed to read line");
 
@@ -123,10 +173,11 @@ fn get_input() -> String {
             }
         }
 
-        if s.is_empty(){ //checking if the input is empty or not. No error checking on type
+        if s.is_empty() {
+            //checking if the input is empty or not. No error checking on type
             println!("Input cannot be empty");
-        }else{
-            return s
+        } else {
+            return s;
         }
     }
 }
@@ -146,7 +197,6 @@ fn show_tasks() {
 
 fn read_json() -> Vec<Task> {
     let json_file_path = Path::new("fakeData.json"); //file path of json
-
     let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
                                                                                //println!("HERE");//debugging
     let tasks: Vec<Task> =
@@ -243,14 +293,13 @@ fn check_if_task_exists(input: &String) -> bool {
     is_matching
 }
 
-fn overwrite_existing(serialized_json: String, file_path: &str) {
-    
+fn overwrite_existing(text_to_write: String, file_path: &str) {
     let mut f = OpenOptions::new()
         .write(true)
         .truncate(true)
         .open(file_path)
         .unwrap();
-    let _ = f.write_all(&serialized_json.as_bytes());
+    let _ = f.write_all(&text_to_write.as_bytes());
 }
 
 fn help_menu() {
@@ -262,6 +311,18 @@ fn help_menu() {
     println!("\nEdit\n     Allows a user to edit an existing task");
     println!("\nRemove\n     Remopoves an existing task from the list");
     println!("\nExit\n     Quits the program");
+}
+
+fn create_backup(){
+    let tasks: Vec<Task> = read_json();
+    let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
+    create_new(json_converted);
+
+}
+
+fn create_new(write_to_file: String){ //creates a new file and saves json to it
+    let mut file = File::create("./backup.json").expect("Could not create backup file. Terminating");
+    file.write_all(write_to_file.as_bytes()).expect("Could not write to backup file. Terminating. Please delete existing backup");
 }
 
 fn logo_print() {
