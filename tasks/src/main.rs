@@ -5,6 +5,7 @@ use serde::Serialize;
 //use std::default;
 //use serde_json::from_str;
 use chrono;
+use serde_json::value::Index;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -82,10 +83,10 @@ fn main_menu() {
     } // loop end
 }
 
-fn add_task() {
+fn add_task() { 
     //******************          ADD FUNCTIONS        ****************************************************************************************************************
     // create a new task and append it to the JSON file "fakeData.json"
-    let mut tasks: Vec<Task> = read_json();
+    let mut tasks: Vec<Task> = read_json("fakedata.json".to_string());
     let mut temp_inputs = Task {
         task_id: read_task_id(),
         date_created: get_date_time(),
@@ -188,7 +189,7 @@ fn show_tasks() {
     //******************          SHOW FUNCTIONS        ****************************************************************************************************************
     //used to show the tasks
     println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
-    let tasks: Vec<Task> = read_json();
+    let tasks: Vec<Task> = read_json("fakedata.json".to_string());
 
     for lines in tasks {
         println!(
@@ -198,8 +199,9 @@ fn show_tasks() {
     }
 }
 
-fn read_json() -> Vec<Task> {
-    let json_file_path = Path::new("fakeData.json"); //file path of json
+fn read_json(file_path: String) -> Vec<Task> { //add an input for file path so that the archive file can also be read.
+
+    let json_file_path = Path::new(&file_path); //file path of json
     let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
                                                                                //println!("HERE");//debugging
     let tasks: Vec<Task> =
@@ -221,7 +223,7 @@ fn show_details() {
 }
 
 fn check_matching_task(input: String) {
-    let data: Vec<Task> = read_json();
+    let data: Vec<Task> = read_json("fakedata.json".to_string());
     let mut is_matching = false;
 
     for lines in data {
@@ -239,7 +241,7 @@ fn check_matching_task(input: String) {
 fn remove_task() {
     //******************          REMOVE FUNCTIONS        ****************************************************************************************************************
     //This is for removing tasks from the list and saving that list over the original list
-    let data: Vec<Task> = read_json(); //reads the json file and returns the struct
+    let data: Vec<Task> = read_json("fakedata.json".to_string()); //reads the json file and returns the struct
 
     println!("Please input the task ID you would like to remove (Press Q to go back)");
     let user_input = get_input(); //user input
@@ -253,11 +255,18 @@ fn remove_task() {
 }
 
 fn check_for_removal(input: &String, mut data: Vec<Task>) {
-    let task_exists = check_if_task_exists(&input);
+    let task_exists: bool = check_if_task_exists(&input);
     let file_path: &str = "./fakeData.json";
 
     if task_exists == true {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
+        let task_index = return_task_index(&input);
+
+
+        //add code here that moves the deleted task to the archive file and marks the file status as "deleted"
+
+
+
         data.remove(return_task_index(&input)); //This succsesfully deletes the task from the Vector. Needs to be rewritten back to the JSON file
 
         let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
@@ -269,7 +278,7 @@ fn check_for_removal(input: &String, mut data: Vec<Task>) {
 
 fn return_task_index(input: &String) -> usize {
     //needs to return int 32 that is the index of the task in the vector
-    let data_test: Vec<Task> = read_json(); //reads the json file and returns the struct HERE FOR TESTING
+    let data_test: Vec<Task> = read_json("fakedata.json".to_string()); //reads the json file and returns the struct HERE FOR TESTING
     let mut index_of_task = 0;
 
     for lines in data_test {
@@ -282,7 +291,7 @@ fn return_task_index(input: &String) -> usize {
 }
 
 fn check_if_task_exists(input: &String) -> bool {
-    let data: Vec<Task> = read_json();
+    let data: Vec<Task> = read_json("fakedata.json".to_string());
     let mut is_matching = false;
 
     for lines in data {
@@ -306,8 +315,14 @@ fn overwrite_existing(text_to_write: String, file_path: &str) {
     let _ = f.write_all(&text_to_write.as_bytes());
 }
 
-fn help_menu() {
-    //******************          HELP MENU        ****************************************************************************************************************
+fn move_to_archive(task_index: usize){//******************          MOVES TASKS TO THE ARCHIVE              ************************************************************************************
+    let archived_tasks: Vec<Task> = read_json("archive.json".to_string());
+    let active_tasks: Vec<Task> = read_json("archive.json".to_string());
+
+    println!("{}", archived_tasks[0].task_details);
+}
+
+fn help_menu() {//******************          HELP MENU        ****************************************************************************************************************
     logo_print();
     println!("\nLetMeKnow Version 0.0.1 Windows Build\nThese commands have been defined internally. Type 'Help' at anytime to see this list.");
     println!("\nShow\n    Shows the user currently active tasks");
@@ -318,9 +333,8 @@ fn help_menu() {
     println!("\nExit\n     Quits the program");
 }
 
-fn create_backup() {
-    //******************          BACKUP FUNCTIONS        ****************************************************************************************************************
-    let tasks: Vec<Task> = read_json();
+fn create_backup() {//******************          BACKUP FUNCTIONS        ****************************************************************************************************************
+    let tasks: Vec<Task> = read_json("fakedata.json".to_string());
     let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
     create_new(json_converted);
 }
