@@ -5,7 +5,10 @@ use serde::Serialize;
 //use std::default;
 //use serde_json::from_str;
 use chrono;
-use serde_json::value::Index;
+use core::task;
+//use serde_json::value::Index;
+//use core::arch;
+//use std::clone;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -13,7 +16,7 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct Task {
     //struct for the task details will be used for reading and writing to json file
     task_id: String,
@@ -42,7 +45,7 @@ impl Default for Task {
 fn main() {
     create_backup();
     logo_print(); //prints the logo at the begining of the script
-    show_tasks();
+    show_tasks("fakedata.json".to_string());
     main_menu();
     delete_file("./backup.json".to_string());
 }
@@ -57,8 +60,8 @@ fn main_menu() {
         match user_input.as_str() {
             "Help" => help_menu(),
             "help" => help_menu(),
-            "Show" => show_tasks(),
-            "show" => show_tasks(),
+            "Show" => show_tasks("fakedata.json".to_string()),
+            "show" => show_tasks("fakedata.json".to_string()),
             "Edit" => println!("Edit a task"),
             "edit" => println!("Edit a task"),
             "Detail" => show_details(),
@@ -71,6 +74,8 @@ fn main_menu() {
             "Delete" => remove_task(),
             "add" => add_task(),
             "Add" => add_task(),
+            "archive" => show_tasks("./archive.json".to_string()),
+            "Archive" => show_tasks("./archive.json".to_string()),
             "Exit" => break,
             "exit" => break,
             "q" => break,
@@ -185,11 +190,11 @@ fn get_input() -> String {
     }
 }
 
-fn show_tasks() {
+fn show_tasks(file_path: String) {
     //******************          SHOW FUNCTIONS        ****************************************************************************************************************
     //used to show the tasks
     println!("TASK ID, TASK NAME, STAKE HOLDER, DUE DATE, STATE");
-    let tasks: Vec<Task> = read_json("fakedata.json".to_string());
+    let tasks: Vec<Task> = read_json(file_path);
 
     for lines in tasks {
         println!(
@@ -262,10 +267,7 @@ fn check_for_removal(input: &String, mut data: Vec<Task>) {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
         let task_index = return_task_index(&input);
 
-
-        //add code here that moves the deleted task to the archive file and marks the file status as "deleted"
-
-
+        move_to_archive(task_index); //this takes the deleted task and sends it to the archive json file
 
         data.remove(return_task_index(&input)); //This succsesfully deletes the task from the Vector. Needs to be rewritten back to the JSON file
 
@@ -315,13 +317,6 @@ fn overwrite_existing(text_to_write: String, file_path: &str) {
     let _ = f.write_all(&text_to_write.as_bytes());
 }
 
-fn move_to_archive(task_index: usize){//******************          MOVES TASKS TO THE ARCHIVE              ************************************************************************************
-    let archived_tasks: Vec<Task> = read_json("archive.json".to_string());
-    let active_tasks: Vec<Task> = read_json("archive.json".to_string());
-
-    println!("{}", archived_tasks[0].task_details);
-}
-
 fn help_menu() {//******************          HELP MENU        ****************************************************************************************************************
     logo_print();
     println!("\nLetMeKnow Version 0.0.1 Windows Build\nThese commands have been defined internally. Type 'Help' at anytime to see this list.");
@@ -361,4 +356,37 @@ fn logo_print() {
     println!(" \\ V  V /| | | | (_) | | | || (_| |  __/\\ V / ");
     println!("  \\_/\\_/ |_|_|  \\___/|_| |_(_)__,_|\\___| \\_/  ");
     println!("\nWelcome to Let Me know, the task management CLI tool")
+}
+
+fn move_to_archive(task_index: usize){//******************          MOVES TASKS TO THE ARCHIVE              ************************************************************************************
+    let mut archived_tasks: Vec<Task> = read_json("archive.json".to_string());
+    
+    
+    let mut tasks: Vec<Task> = read_json("fakedata.json".to_string());
+
+
+    //below is for debugging
+    //println!("SHOW ME");
+    //for lines in tasks {
+    //    println!(
+    //      "{} | {} | {} | {}",
+    //       lines.task_id, lines.task_name, lines.state, lines.due_date
+    //    );
+    //}
+    //above is for debugging
+
+    //println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", temp_new_task.task_id, temp_new_task.task_name, temp_new_task.task_details, temp_new_task.stake_holder, temp_new_task.date_created, temp_new_task.due_date, temp_new_task.stake_holder);
+    let temp_task: Task = tasks.remove(task_index); //this is returning out of bounds
+    archived_tasks.push(temp_task);
+    let json_converted = serde_json::to_string(&archived_tasks).expect("Could not convert data to JSON");   
+    overwrite_existing(json_converted, "archive.json");
+
+    println!("\n");
+    for lines in tasks {
+        println!(
+          "{} | {} | {} | {}",
+           lines.task_id, lines.task_name, lines.state, lines.due_date
+        );
+    }
+
 }
