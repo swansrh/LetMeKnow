@@ -246,8 +246,6 @@ fn check_matching_task(input: String) {
 fn remove_task() {
     //******************          REMOVE FUNCTIONS        ****************************************************************************************************************
     //This is for removing tasks from the list and saving that list over the original list
-    let data: Vec<Task> = read_json("fakedata.json".to_string()); //reads the json file and returns the struct
-
     println!("Please input the task ID you would like to remove (Press Q to go back)");
     let user_input = get_input(); //user input
 
@@ -255,28 +253,11 @@ fn remove_task() {
         //checks user input to deterimine next action
         "q" => println!("Cancelled"),
         "Q" => println!("Cancelled"),
-        _ => check_for_removal(&user_input, data), //Takes string and feeds it to the matching function to return a task and its details
+        _ => check_for_removal(&user_input), //Takes string and feeds it to the matching function to return a task and its details
     }
 }
 
-fn check_for_removal(input: &String, mut data: Vec<Task>) {
-    let task_exists: bool = check_if_task_exists(&input);
-    let file_path: &str = "./fakeData.json";
 
-    if task_exists == true {
-        println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
-        let task_index = return_task_index(&input);
-
-        move_to_archive(task_index); //this takes the deleted task and sends it to the archive json file
-
-        data.remove(return_task_index(&input)); //This succsesfully deletes the task from the Vector. Needs to be rewritten back to the JSON file
-
-        let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
-        overwrite_existing(json_converted, file_path); //this function saves to file
-    } else {
-        println!("Task does not exist"); //Let's the user know the task does not exist and returns them to the main menu
-    }
-}
 
 fn return_task_index(input: &String) -> usize {
     //needs to return int 32 that is the index of the task in the vector
@@ -358,35 +339,24 @@ fn logo_print() {
     println!("\nWelcome to Let Me know, the task management CLI tool")
 }
 
-fn move_to_archive(task_index: usize){//******************          MOVES TASKS TO THE ARCHIVE              ************************************************************************************
-    let mut archived_tasks: Vec<Task> = read_json("archive.json".to_string());
-    
-    
-    let mut tasks: Vec<Task> = read_json("fakedata.json".to_string());
+fn check_for_removal(input: &String) {
+    let mut archived_tasks: Vec<Task> = read_json("archive.json".to_string()); //reads the archive.json file
+    let mut data: Vec<Task> = read_json("fakedata.json".to_string()); //reads the json file and returns the struct
+    let task_exists: bool = check_if_task_exists(&input);
+    let file_path: &str = "./fakeData.json";
 
+    if task_exists == true {
+        println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
+        let task_index = return_task_index(&input);
 
-    //below is for debugging
-    //println!("SHOW ME");
-    //for lines in tasks {
-    //    println!(
-    //      "{} | {} | {} | {}",
-    //       lines.task_id, lines.task_name, lines.state, lines.due_date
-    //    );
-    //}
-    //above is for debugging
+        let temp_task: Task = data.swap_remove(task_index); 
+        archived_tasks.push(temp_task);
+        let json_converted = serde_json::to_string(&archived_tasks).expect("Could not convert data to JSON");   
+        overwrite_existing(json_converted, "archive.json");
 
-    //println!("\nTask ID: {} \nTask: {}\nDetails: {}\nStake Holder: {}\nDate Created: {}\nDate Due: {}\nCurrent State:  {}", temp_new_task.task_id, temp_new_task.task_name, temp_new_task.task_details, temp_new_task.stake_holder, temp_new_task.date_created, temp_new_task.due_date, temp_new_task.stake_holder);
-    let temp_task: Task = tasks.remove(task_index); //this is returning out of bounds
-    archived_tasks.push(temp_task);
-    let json_converted = serde_json::to_string(&archived_tasks).expect("Could not convert data to JSON");   
-    overwrite_existing(json_converted, "archive.json");
-
-    println!("\n");
-    for lines in tasks {
-        println!(
-          "{} | {} | {} | {}",
-           lines.task_id, lines.task_name, lines.state, lines.due_date
-        );
+        let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
+        overwrite_existing(json_converted, file_path); //this function saves to file
+    } else {
+        println!("Task does not exist"); //Let's the user know the task does not exist and returns them to the main menu
     }
-
 }
