@@ -1,4 +1,6 @@
 use chrono::FixedOffset;
+use ratatui::Frame;
+use std::io::Result;
 use serde::Deserialize;
 use serde::Serialize;
 use chrono;
@@ -6,8 +8,20 @@ use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
+use std::io::stdout;
 use std::io::Write;
 use std::path::Path;
+use ratatui::{ //ratatui import for terminal UI application
+    backend::CrosstermBackend,
+    crossterm::{
+        event::{self, KeyCode, KeyEventKind},
+        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+        ExecutableCommand,
+    },
+    style::Stylize,
+    widgets::Paragraph,
+    Terminal,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Task {
@@ -35,12 +49,48 @@ impl Default for Task {
         }
     }
 }
-fn main() {
-    create_backup();
-    logo_print(); //prints the logo at the begining of the script
-    show_tasks("./data.json".to_string());
-    main_menu();
-    delete_file("./backup.json".to_string());
+fn main() -> Result<()> { //the retun here is required by ratatui
+    //TUI code below
+    stdout().execute(EnterAlternateScreen)?; //creates a second screen that is used to display the TUI. Sits inside the terminal
+    enable_raw_mode()?; //turns off IO processing by the terminal
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
+    terminal.clear()?; //clears the screen
+
+
+    loop{
+        //Draw TUI
+        terminal.draw(|frame| {
+            let area = frame.area();
+            frame.render_widget(
+                Paragraph::new("Welcome to Let-Me Know: Press q to quit")
+                    .white()
+                    .on_blue(),
+                area,
+            );
+        })?;
+    
+         // Handle Events
+        if event::poll(std::time::Duration::from_millis(16))? {
+            if let event::Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                    break;
+                }
+            }
+        }
+    }
+
+    stdout().execute(LeaveAlternateScreen)?;
+    disable_raw_mode()?;
+    Ok(())
+
+    //TUI code above
+    
+    //blanking out actual functions to begin testing new TUI
+    //create_backup();
+    //logo_print(); //prints the logo at the begining of the script
+    //show_tasks("./data.json".to_string());
+    //main_menu();
+    //delete_file("./backup.json".to_string());
 }
 
 fn main_menu() {
