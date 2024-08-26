@@ -1,14 +1,7 @@
-//use chrono::offset;
 use chrono::FixedOffset;
 use serde::Deserialize;
 use serde::Serialize;
-//use std::default;
-//use serde_json::from_str;
 use chrono;
-//use core::task;
-//use serde_json::value::Index;
-//use core::arch;
-//use std::clone;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -45,7 +38,7 @@ impl Default for Task {
 fn main() {
     create_backup();
     logo_print(); //prints the logo at the begining of the script
-    show_tasks("fakedata.json".to_string());
+    show_tasks("./data.json".to_string());
     main_menu();
     delete_file("./backup.json".to_string());
 }
@@ -60,8 +53,8 @@ fn main_menu() {
         match user_input.as_str() {
             "Help" => help_menu(),
             "help" => help_menu(),
-            "Show" => show_tasks("fakedata.json".to_string()),
-            "show" => show_tasks("fakedata.json".to_string()),
+            "Show" => show_tasks("./data.json".to_string()),
+            "show" => show_tasks("./data.json".to_string()),
             "Edit" => println!("Edit a task"),
             "edit" => println!("Edit a task"),
             "Detail" => show_details(),
@@ -90,8 +83,8 @@ fn main_menu() {
 
 fn add_task() { 
     //******************          ADD FUNCTIONS        ****************************************************************************************************************
-    // create a new task and append it to the JSON file "fakeData.json"
-    let mut tasks: Vec<Task> = read_json("fakedata.json".to_string());
+    // create a new task and append it to the JSON file "./data.json"
+    let mut tasks: Vec<Task> = read_json("./data.json".to_string());
     let mut temp_inputs = Task {
         task_id: read_task_id(),
         date_created: get_date_time(),
@@ -137,7 +130,7 @@ fn add_task() {
     if go_forth == true {
         tasks.push(temp_inputs);
         let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
-        overwrite_existing(json_converted, "./fakeData.json"); //this function saves to file
+        overwrite_existing(json_converted, "./data.json"); //this function saves to file
         overwrite_existing(read_task_id(), "./count.txt");
         println!("Task was saved")
     }
@@ -210,7 +203,7 @@ fn read_json(file_path: String) -> Vec<Task> { //add an input for file path so t
     let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
                                                                                //println!("HERE");//debugging
     let tasks: Vec<Task> =
-        serde_json::from_reader(data_file).expect("Error while reading data.json");
+        serde_json::from_reader(data_file).expect("Error while reading ./data.json");
     tasks
 }
 
@@ -228,7 +221,7 @@ fn show_details() {
 }
 
 fn check_matching_task(input: String) {
-    let data: Vec<Task> = read_json("fakedata.json".to_string());
+    let data: Vec<Task> = read_json("./data.json".to_string());
     let mut is_matching = false;
 
     for lines in data {
@@ -261,7 +254,7 @@ fn remove_task() {
 
 fn return_task_index(input: &String) -> usize {
     //needs to return int 32 that is the index of the task in the vector
-    let data_test: Vec<Task> = read_json("fakedata.json".to_string()); //reads the json file and returns the struct HERE FOR TESTING
+    let data_test: Vec<Task> = read_json("./data.json".to_string()); //reads the json file and returns the struct HERE FOR TESTING
     let mut index_of_task = 0;
 
     for lines in data_test {
@@ -274,7 +267,7 @@ fn return_task_index(input: &String) -> usize {
 }
 
 fn check_if_task_exists(input: &String) -> bool {
-    let data: Vec<Task> = read_json("fakedata.json".to_string());
+    let data: Vec<Task> = read_json("./data.json".to_string());
     let mut is_matching = false;
 
     for lines in data {
@@ -310,7 +303,7 @@ fn help_menu() {//******************          HELP MENU        *****************
 }
 
 fn create_backup() {//******************          BACKUP FUNCTIONS        ****************************************************************************************************************
-    let tasks: Vec<Task> = read_json("fakedata.json".to_string());
+    let tasks: Vec<Task> = read_json("./data.json".to_string());
     let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
     create_new(json_converted);
 }
@@ -341,9 +334,9 @@ fn logo_print() {
 
 fn check_for_removal(input: &String) {
     let mut archived_tasks: Vec<Task> = read_json("archive.json".to_string()); //reads the archive.json file
-    let mut data: Vec<Task> = read_json("fakedata.json".to_string()); //reads the json file and returns the struct
+    let mut data: Vec<Task> = read_json("./data.json".to_string()); //reads the json file and returns the struct
     let task_exists: bool = check_if_task_exists(&input);
-    let file_path: &str = "./fakeData.json";
+    let file_path: &str = "./data.json";
 
     if task_exists == true {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
