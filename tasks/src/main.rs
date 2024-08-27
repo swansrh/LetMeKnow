@@ -1,27 +1,37 @@
+use chrono;
 use chrono::FixedOffset;
-use ratatui::Frame;
-use std::io::Result;
 use serde::Deserialize;
 use serde::Serialize;
-use chrono;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::stdout;
+//use std::io::Result;
 use std::io::Write;
 use std::path::Path;
-use ratatui::{ //ratatui import for terminal UI application
-    backend::CrosstermBackend,
-    crossterm::{
-        event::{self, KeyCode, KeyEventKind},
-        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-        ExecutableCommand,
-    },
-    style::Stylize,
-    widgets::Paragraph,
-    Terminal,
+
+//ratatui imports
+
+use color_eyre::{
+    eyre::{bail, WrapErr},
+    Result,
 };
+
+use ratatui::{ //ratatui is terminal user interface crate
+    buffer::Buffer,
+    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind},
+    layout::{Alignment, Rect},
+    style::Stylize,
+    symbols::border,
+    text::{Line, Text},
+    widgets::{
+        block::{Position, Title},
+        Block, Paragraph, Widget,
+    },
+    Frame,
+};
+mod tui;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Task {
@@ -49,42 +59,116 @@ impl Default for Task {
         }
     }
 }
-fn main() -> Result<()> { //the retun here is required by ratatui
-    //TUI code below
-    stdout().execute(EnterAlternateScreen)?; //creates a second screen that is used to display the TUI. Sits inside the terminal
-    enable_raw_mode()?; //turns off IO processing by the terminal
-    let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
-    terminal.clear()?; //clears the screen
 
+#[derive(Debug, Default)] //ratatui counter struct
+pub struct App {
+    counter: u8,
+    exit: bool,
+}
 
-    loop{
-        //Draw TUI
-        terminal.draw(|frame| {
-            let area = frame.area();
-            frame.render_widget(
-                Paragraph::new("Welcome to Let-Me Know: Press q to quit")
-                    .white()
-                    .on_blue(),
-                area,
-            );
-        })?;
-    
-         // Handle Events
-        if event::poll(std::time::Duration::from_millis(16))? {
-            if let event::Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                    break;
-                }
-            }
+impl App {
+    //implementation for the struct App above
+    /// runs the application's main loop until the user quits
+
+    pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
+        while !self.exit {
+            terminal.draw(|frame| self.render_frame(frame))?;
+            self.handle_events().wrap_err("handle events failed")?;
+        }
+        Ok(())
+    }
+
+    fn render_frame(&self, frame: &mut Frame) {
+        frame.render_widget(self, frame.area());
+    }
+
+    /// updates the application's state based on user input
+    fn handle_events(&mut self) -> Result<()> {
+        match event::read()? {
+            // it's important to check that the event is a key press event as
+            // crossterm also emits key release and repeat events on Windows.
+            Event::Key(key_event) if key_event.kind == KeyEventKind::Press => self
+                .handle_key_event(key_event)
+                .wrap_err_with(|| format!("handling key event failed:\n{key_event:#?}")),
+            _ => Ok(()),
         }
     }
 
-    stdout().execute(LeaveAlternateScreen)?;
-    disable_raw_mode()?;
-    Ok(())
+    fn handle_key_event(&mut self, key_event: KeyEvent) -> Result<()> {
+        match key_event.code {
+            KeyCode::Char('q') => self.exit(),
+            KeyCode::Left => self.decrement_counter()?,
+            KeyCode::Right => self.increment_counter()?,
+            _ => {}
+        }
+        Ok(())
+    }
 
-    //TUI code above
+    fn exit(&mut self) { //exit input
+        self.exit = true;
+    }
+
+    fn increment_counter(&mut self) -> Result<()> {
+        self.counter += 1;
+        if self.counter > 2 {
+            bail!("counter overflow");
+        }
+        Ok(())
+    }
+
+    fn decrement_counter(&mut self) -> Result<()> { //decreaing input
+        self.counter -= 1;
+        Ok(())
+    }
+}
+
+impl Widget for &App {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let title = Title::from(" Counter App Tutorial ".bold());
+        let instructions = Title::from(Line::from(vec![
+            " Decrement ".into(),
+            "<Left>".blue().bold(),
+            " Increment ".into(),
+            "<Right>".blue().bold(),
+            " Quit ".into(),
+            "<Q> ".blue().bold(),
+        ]));
+        let block = Block::bordered()
+            .title(title.alignment(Alignment::Center))
+            .title(
+                instructions
+                    .alignment(Alignment::Center)
+                    .position(Position::Bottom),
+            )
+            .border_set(border::THICK);
+
+        let counter_text = Text::from(vec![Line::from(vec![
+            "Value: ".into(),
+            self.counter.to_string().yellow(),
+        ])]);
+
+        Paragraph::new(counter_text)
+            .centered()
+            .block(block)
+            .render(area, buf);
+    }
+}
+
+fn main() -> Result<()> {//the retun here is required by ratatui
+    //TUI code below
+    color_eyre::install();
+    let mut terminal = tui::init()?;
+    let app_result = App::default().run(&mut terminal);
     
+    if let Err(err) = tui::restore() { //error handling with color eyre
+        eprintln!(
+            "failed to restore terminal. Run `reset` or restart your terminal to recover: {}",
+            err
+        );
+    }
+    app_result
+    //TUI code above
+
     //blanking out actual functions to begin testing new TUI
     //create_backup();
     //logo_print(); //prints the logo at the begining of the script
@@ -131,7 +215,7 @@ fn main_menu() {
     } // loop end
 }
 
-fn add_task() { 
+fn add_task() {
     //******************          ADD FUNCTIONS        ****************************************************************************************************************
     // create a new task and append it to the JSON file "./data.json"
     let mut tasks: Vec<Task> = read_json("./data.json".to_string());
@@ -247,7 +331,8 @@ fn show_tasks(file_path: String) {
     }
 }
 
-fn read_json(file_path: String) -> Vec<Task> { //add an input for file path so that the archive file can also be read.
+fn read_json(file_path: String) -> Vec<Task> {
+    //add an input for file path so that the archive file can also be read.
 
     let json_file_path = Path::new(&file_path); //file path of json
     let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
@@ -300,8 +385,6 @@ fn remove_task() {
     }
 }
 
-
-
 fn return_task_index(input: &String) -> usize {
     //needs to return int 32 that is the index of the task in the vector
     let data_test: Vec<Task> = read_json("./data.json".to_string()); //reads the json file and returns the struct HERE FOR TESTING
@@ -341,7 +424,8 @@ fn overwrite_existing(text_to_write: String, file_path: &str) {
     let _ = f.write_all(&text_to_write.as_bytes());
 }
 
-fn help_menu() {//******************          HELP MENU        ****************************************************************************************************************
+fn help_menu() {
+    //******************          HELP MENU        ****************************************************************************************************************
     logo_print();
     println!("\nLetMeKnow Version 0.0.1 Windows Build\nThese commands have been defined internally. Type 'Help' at anytime to see this list.");
     println!("\nShow\n    Shows the user currently active tasks");
@@ -352,7 +436,8 @@ fn help_menu() {//******************          HELP MENU        *****************
     println!("\nExit\n     Quits the program");
 }
 
-fn create_backup() {//******************          BACKUP FUNCTIONS        ****************************************************************************************************************
+fn create_backup() {
+    //******************          BACKUP FUNCTIONS        ****************************************************************************************************************
     let tasks: Vec<Task> = read_json("./data.json".to_string());
     let json_converted = serde_json::to_string(&tasks).expect("Could not convert data to JSON");
     create_new(json_converted);
@@ -392,14 +477,86 @@ fn check_for_removal(input: &String) {
         println!("Task exists and can be removed"); //if it exists, find it and return the index. then remove it
         let task_index = return_task_index(&input);
 
-        let temp_task: Task = data.swap_remove(task_index); 
+        let temp_task: Task = data.swap_remove(task_index);
         archived_tasks.push(temp_task);
-        let json_converted = serde_json::to_string(&archived_tasks).expect("Could not convert data to JSON");   
+        let json_converted =
+            serde_json::to_string(&archived_tasks).expect("Could not convert data to JSON");
         overwrite_existing(json_converted, "archive.json");
 
         let json_converted = serde_json::to_string(&data).expect("Could not convert data to JSON");
         overwrite_existing(json_converted, file_path); //this function saves to file
     } else {
         println!("Task does not exist"); //Let's the user know the task does not exist and returns them to the main menu
+    }
+}
+
+
+
+//TESTS for RATATUI ***************************************************************************************
+#[cfg(test)]
+mod tests {
+    use ratatui::style::Style;
+
+    use super::*;
+
+    #[test]
+    fn render() {
+        let app = App::default();
+        let mut buf = Buffer::empty(Rect::new(0, 0, 50, 4));
+
+        app.render(buf.area, &mut buf);
+
+        let mut expected = Buffer::with_lines(vec![
+            "┏━━━━━━━━━━━━━ Counter App Tutorial ━━━━━━━━━━━━━┓",
+            "┃                    Value: 0                    ┃",
+            "┃                                                ┃",
+            "┗━ Decrement <Left> Increment <Right> Quit <Q> ━━┛",
+        ]);
+        let title_style = Style::new().bold();
+        let counter_style = Style::new().yellow();
+        let key_style = Style::new().blue().bold();
+        expected.set_style(Rect::new(14, 0, 22, 1), title_style);
+        expected.set_style(Rect::new(28, 1, 1, 1), counter_style);
+        expected.set_style(Rect::new(13, 3, 6, 1), key_style);
+        expected.set_style(Rect::new(30, 3, 7, 1), key_style);
+        expected.set_style(Rect::new(43, 3, 4, 1), key_style);
+
+        // note ratatui also has an assert_buffer_eq! macro that can be used to
+        // compare buffers and display the differences in a more readable way
+        assert_eq!(buf, expected);
+    }
+
+    #[test]
+    fn handle_key_event() {
+        let mut app = App::default();
+        app.handle_key_event(KeyCode::Right.into()).unwrap();
+        assert_eq!(app.counter, 1);
+
+        app.handle_key_event(KeyCode::Left.into()).unwrap();
+        assert_eq!(app.counter, 0);
+
+        let mut app = App::default();
+        app.handle_key_event(KeyCode::Char('q').into()).unwrap();
+        assert!(app.exit);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to subtract with overflow")]
+    fn handle_key_event_panic() {
+        let mut app = App::default();
+        let _ = app.handle_key_event(KeyCode::Left.into());
+    }
+
+    #[test]
+    fn handle_key_event_overflow() {
+        let mut app = App::default();
+        assert!(app.handle_key_event(KeyCode::Right.into()).is_ok());
+        assert!(app.handle_key_event(KeyCode::Right.into()).is_ok());
+        assert_eq!(
+            app.handle_key_event(KeyCode::Right.into())
+                .unwrap_err()
+                .to_string(),
+            "counter overflow"
+        );
     }
 }
