@@ -664,9 +664,11 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "color-eyre",
+ "itertools",
  "ratatui",
  "serde",
  "serde_json",
+ "unicode-width",
 ]
 
 [[package]]
