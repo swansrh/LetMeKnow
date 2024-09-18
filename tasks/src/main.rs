@@ -105,19 +105,22 @@ impl Task {
 use std::error::Error;
 
 fn main() -> Result<()> {
+    //blanking out actual functions to begin testing new TUI
+    create_backup();
+    logo_print(); //prints the logo at the begining of the script
+    show_tasks("./data.json".to_string());
+    main_menu();
+    delete_file("./backup.json".to_string());
+
+
+
+
     //the retun here is required by ratatui
     color_eyre::install()?;
     let terminal = ratatui::init();
     let app_result = App::new().run(terminal);
     ratatui::restore();
     app_result
-
-    //blanking out actual functions to begin testing new TUI
-    //create_backup();
-    //logo_print(); //prints the logo at the begining of the script
-    //show_tasks("./data.json".to_string());
-    //main_menu();
-    //delete_file("./backup.json".to_string());
 }
 
 fn main_menu() {
