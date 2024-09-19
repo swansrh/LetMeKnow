@@ -519,11 +519,11 @@ impl App {
         self.colors = TableColors::new(&PALETTES[self.color_index]);
     }
 
-    fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
+    fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> { //this is what actually renders the table
         loop {
-            terminal.draw(|frame| self.draw(frame))?;
+            terminal.draw(|frame| self.draw(frame))?; //renders the frame to the terminal
 
-            if let Event::Key(key) = event::read()? {
+            if let Event::Key(key) = event::read()? { //event handler for capturing user inputs through the TUI
                 if key.kind == KeyEventKind::Press {
                     match key.code {
                         KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
