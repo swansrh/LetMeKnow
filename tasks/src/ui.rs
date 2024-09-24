@@ -28,6 +28,41 @@ pub struct Task {//all of these must be public to be used with the other functio
     pub state: String,
 }
 
+impl Task {
+    const fn ref_array(&self) -> [&String; 7]{
+        [&self.task_id, &self.task_name, &self.task_details, &self.stake_holder, &self.due_date, &self.date_created, &self.state]
+    }
+
+    fn task_id(&self) -> &str {
+        &self.task_id
+    }
+
+    fn task_name(&self) -> &str {
+        &self.task_name
+    }
+
+    fn task_details(&self) -> &str {
+        &self.task_details
+    }
+
+    fn stake_holder(&self) -> &str {
+        &self.stake_holder
+    }
+
+    fn due_date(&self) -> &str {
+        &self.due_date
+    }
+
+    fn date_created(&self) -> &str {
+        &self.date_created
+    }
+
+    fn state(&self) -> &str {
+        &self.state
+    }
+
+}
+
 impl Default for Task {
     //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
     fn default() -> Task {
