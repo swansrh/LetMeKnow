@@ -5,32 +5,28 @@ use serde::Serialize;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
-use std::io;
 use std::io::stdout;
 //use std::io::Result;
 use std::io::Write;
 use std::path::Path;
 
-//ratatui imports
-use color_eyre::Result;
-use itertools::Itertools;
+use std::{error::Error, io};
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
-    layout::{Constraint, Layout, Margin, Rect},
-    style::{self, Color, Modifier, Style, Stylize},
-    text::{Line, Text},
-    widgets::{
-        Block, BorderType, Cell, HighlightSpacing, Paragraph, Row, Scrollbar, ScrollbarOrientation,
-        ScrollbarState, Table, TableState,
+    backend::{Backend, CrosstermBackend},
+    crossterm::{
+        event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+        execute,
+        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     },
-    DefaultTerminal, Frame,
+    Terminal,
 };
-use style::palette::tailwind;
-use unicode_width::UnicodeWidthStr;
 
-const PALETTES: [tailwind::Palette; 1] = [tailwind::BLUE];
-const INFO_TEXT: &str = "(Esc) quit | (↑) move up | (↓) move down";
-const ITEM_HEIGHT: usize = 4;
+mod app;
+mod ui;
+use crate::{
+    app::{App, CurrentScreen},
+    ui::ui,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Task {
@@ -59,68 +55,45 @@ impl Default for Task {
     }
 }
 
-impl Task {
-    const fn ref_array(&self) -> [&String; 7] {
-        [
-            &self.task_id,
-            &self.task_name,
-            &self.task_details,
-            &self.stake_holder,
-            &self.due_date,
-            &self.date_created,
-            &self.state,
-        ]
-    }
-
-    fn task_id(&self) -> &str {
-        &self.task_id
-    }
-
-    fn task_name(&self) -> &str {
-        &self.task_name
-    }
-
-    fn task_details(&self) -> &str {
-        &self.task_details
-    }
-
-    fn stake_holder(&self) -> &str {
-        &self.stake_holder
-    }
-
-    fn due_date(&self) -> &str {
-        &self.due_date
-    }
-
-    fn date_created(&self) -> &str {
-        &self.date_created
-    }
-
-    fn state(&self) -> &str {
-        &self.state
-    }
-}
-
 //RATATUI *****************************************************************************************************************************************************************************
-use std::error::Error;
 
-fn main() -> Result<()> {
+
+fn main() -> Result<(), Box<dyn Error>>{
     //blanking out actual functions to begin testing new TUI
     create_backup();
     logo_print(); //prints the logo at the begining of the script
     show_tasks("./data.json".to_string());
     main_menu();
     delete_file("./backup.json".to_string());
+    enable_raw_mode()?;
+    let mut stderr = io::stderr(); //stdout is fine
+    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
 
+    let backend = CrosstermBackend::new(stderr);
+    let mut terminal = Terminal::new(backend)?;
 
+    //create app and run
+    let mut app = App::new();
+    let res = run_app(&mut terminal, &mut app);
 
+     // restore terminal
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
 
-    //the retun here is required by ratatui
-    color_eyre::install()?;
-    let terminal = ratatui::init();
-    let app_result = App::new().run(terminal);
-    ratatui::restore();
-    app_result
+    if let Ok(do_print) = res { //checks if run_app() errored or returned OK
+        if do_print {
+            //app.print_json()?;
+        }
+    } else if let Err(err) = res {
+        println!("{err:?}");
+    }
+
+    Ok(())
 }
 
 fn main_menu() {
@@ -160,6 +133,25 @@ fn main_menu() {
         }
     } // loop end
 }
+
+
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
+
+    loop { //draws the UI to the terminal
+        terminal.draw(|f| ui(f, app))?;
+
+       if let Event::Key(key) = event::read()? {
+        //if key.kind == event::KeyEventKind::Release { //this if statement skips any event that is not a key press
+        //    continue;
+        //}
+            if key.kind == KeyEventKind::Press {
+                    //event handler here
+                    }
+                }
+            }        
+       }
+
+
 
 fn add_task() {
     //******************          ADD FUNCTIONS        ****************************************************************************************************************
@@ -436,255 +428,3 @@ fn check_for_removal(input: &String) {
     }
 }
 
-//ratatui below
-struct TableColors {
-    buffer_bg: Color,
-    header_bg: Color,
-    header_fg: Color,
-    row_fg: Color,
-    selected_style_fg: Color,
-    normal_row_color: Color,
-    alt_row_color: Color,
-    footer_border_color: Color,
-}
-
-impl TableColors {
-    const fn new(color: &tailwind::Palette) -> Self {
-        Self {
-            buffer_bg: tailwind::SLATE.c950,
-            header_bg: color.c900,
-            header_fg: tailwind::SLATE.c200,
-            row_fg: tailwind::SLATE.c200,
-            selected_style_fg: color.c400,
-            normal_row_color: tailwind::SLATE.c950,
-            alt_row_color: tailwind::SLATE.c900,
-            footer_border_color: color.c400,
-        }
-    }
-}
-
-struct App {
-    state: TableState,
-    items: Vec<Task>,
-    longest_item_lens: (u16, u16, u16, u16, u16), // order is (task_id, task_name, task_details, due_date, state)
-    scroll_state: ScrollbarState,
-    colors: TableColors,
-    color_index: usize,
-}
-
-impl App {
-    fn new() -> Self {
-        let data_vec = read_json("./data.json".to_string()); //Feed it the info it needs
-        Self {
-            state: TableState::default().with_selected(0),
-            longest_item_lens: constraint_len_calculator(&data_vec),
-            scroll_state: ScrollbarState::new((data_vec.len() - 1) * ITEM_HEIGHT),
-            colors: TableColors::new(&PALETTES[0]),
-            color_index: 0,
-            items: data_vec,
-        }
-    }
-
-    pub fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-        self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
-    }
-
-    pub fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-        self.scroll_state = self.scroll_state.position(i * ITEM_HEIGHT);
-    }
-
-    pub fn set_colors(&mut self) {
-        self.colors = TableColors::new(&PALETTES[self.color_index]);
-    }
-
-    fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> { //this is what actually renders the table
-        loop {
-            terminal.draw(|frame| self.draw(frame))?; //renders the frame to the terminal
-
-            if let Event::Key(key) = event::read()? { //event handler for capturing user inputs through the TUI
-                if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                        KeyCode::Char('j') | KeyCode::Down => self.next(),
-                        KeyCode::Char('k') | KeyCode::Up => self.previous(),
-                        _ => {}
-                    }
-                }
-            }
-        }
-    }
-
-    fn draw(&mut self, frame: &mut Frame) {
-        let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
-        let rects = vertical.split(frame.area());
-
-        self.set_colors();
-
-        self.render_table(frame, rects[0]);
-        self.render_scrollbar(frame, rects[0]);
-        self.render_footer(frame, rects[1]);
-    }
-
-    fn render_table(&mut self, frame: &mut Frame, area: Rect) {
-        let header_style = Style::default()
-            .fg(self.colors.header_fg)
-            .bg(self.colors.header_bg);
-        let selected_style = Style::default()
-            .add_modifier(Modifier::REVERSED)
-            .fg(self.colors.selected_style_fg);
-
-        let header = [
-            "ID",
-            "Task Name",
-            "Task Details",
-            "Stakeholder",
-            "Due Date",
-            "Date Created",
-            "State",
-        ] //this defines the first row which is the header
-        .into_iter()
-        .map(Cell::from)
-        .collect::<Row>()
-        .style(header_style)
-        .height(1);
-
-        let rows = self.items.iter().enumerate().map(|(i, data)| {
-            let color = match i % 2 {
-                0 => self.colors.normal_row_color,
-                _ => self.colors.alt_row_color,
-            };
-            let item = data.ref_array();
-            item.into_iter()
-                .map(|content| Cell::from(Text::from(format!("\n{content}\n"))))
-                .collect::<Row>()
-                .style(Style::new().fg(self.colors.row_fg).bg(color))
-                .height(4)
-        });
-        let bar = " █ ";
-        let t = Table::new(
-            rows,
-            [
-                // + 1 is for padding.                              //NEED TO ADD CONSTRAINT FOR EACH COLUMN I WANT TO DISPLAY HERE
-                Constraint::Length(self.longest_item_lens.0 + 1),
-                Constraint::Min(self.longest_item_lens.1 + 1),
-                Constraint::Min(self.longest_item_lens.2),
-                Constraint::Min(self.longest_item_lens.1 + 1),
-                Constraint::Min(self.longest_item_lens.1 + 1),
-                Constraint::Min(self.longest_item_lens.1 + 1),
-                Constraint::Min(self.longest_item_lens.0),
-            ],
-        )
-        .header(header)
-        .highlight_style(selected_style)
-        .highlight_symbol(Text::from(vec![
-            "".into(),
-            bar.into(),
-            bar.into(),
-            "".into(),
-        ]))
-        .bg(self.colors.buffer_bg)
-        .highlight_spacing(HighlightSpacing::Always);
-        frame.render_stateful_widget(t, area, &mut self.state);
-    }
-
-    fn render_scrollbar(&mut self, frame: &mut Frame, area: Rect) {
-        frame.render_stateful_widget(
-            Scrollbar::default()
-                .orientation(ScrollbarOrientation::VerticalRight)
-                .begin_symbol(None)
-                .end_symbol(None),
-            area.inner(Margin {
-                vertical: 1,
-                horizontal: 1,
-            }),
-            &mut self.scroll_state,
-        );
-    }
-
-    fn render_footer(&self, frame: &mut Frame, area: Rect) {
-        let info_footer = Paragraph::new(Line::from(INFO_TEXT))
-            .style(
-                Style::new()
-                    .fg(self.colors.row_fg)
-                    .bg(self.colors.buffer_bg),
-            )
-            .centered()
-            .block(
-                Block::bordered()
-                    .border_type(BorderType::Double)
-                    .border_style(Style::new().fg(self.colors.footer_border_color)),
-            );
-        frame.render_widget(info_footer, area);
-    }
-}
-
-fn constraint_len_calculator(items: &[Task]) -> (u16, u16, u16, u16, u16) {
-    let id_len = items //this implements the task ID
-        .iter()
-        .map(Task::task_id)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-
-    let name_len = items //this implements the task name
-        .iter()
-        .map(Task::task_name)
-        .flat_map(str::lines)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-
-    let details_len = items //this implements the task details
-        .iter()
-        .map(Task::task_details)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-
-    let due_date = items //this implements the task name
-        .iter()
-        .map(Task::due_date)
-        .flat_map(str::lines)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-
-    let state_len = items //this implements the task name
-        .iter()
-        .map(Task::state)
-        .flat_map(str::lines)
-        .map(UnicodeWidthStr::width)
-        .max()
-        .unwrap_or(0);
-
-    #[allow(clippy::cast_possible_truncation)]
-    (
-        id_len as u16,
-        name_len as u16,
-        details_len as u16,
-        due_date as u16,
-        state_len as u16,
-    )
-}
