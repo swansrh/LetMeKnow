@@ -25,46 +25,20 @@ mod app;
 mod ui;
 use crate::{
     app::{App, CurrentScreen},
-    ui::ui,
+    ui::{ui, Task},
 };
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-struct Task {
-    //struct for the task details will be used for reading and writing to json file
-    task_id: String,
-    task_name: String,
-    task_details: String,
-    stake_holder: String,
-    due_date: String,
-    date_created: String,
-    state: String,
-}
-
-impl Default for Task {
-    //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
-    fn default() -> Task {
-        Task {
-            task_id: "Task ID".to_string(),
-            task_name: "Task Name".to_string(),
-            task_details: "Additional Details".to_string(),
-            stake_holder: "Stake Holders".to_string(),
-            due_date: "Date Due".to_string(),
-            date_created: "Date Due".to_string(),
-            state: "Current State".to_string(),
-        }
-    }
-}
 
 //RATATUI *****************************************************************************************************************************************************************************
 
-
 fn main() -> Result<(), Box<dyn Error>>{
     //blanking out actual functions to begin testing new TUI
-    create_backup();
-    logo_print(); //prints the logo at the begining of the script
-    show_tasks("./data.json".to_string());
-    main_menu();
-    delete_file("./backup.json".to_string());
+    //create_backup();
+    //logo_print(); //prints the logo at the begining of the script
+    //show_tasks("./data.json".to_string());
+    //main_menu();
+    //delete_file("./backup.json".to_string());
+    
+    
     enable_raw_mode()?;
     let mut stderr = io::stderr(); //stdout is fine
     execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
@@ -95,6 +69,44 @@ fn main() -> Result<(), Box<dyn Error>>{
 
     Ok(())
 }
+
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
+
+    loop { //draws the UI to the terminal
+        terminal.draw(|f| ui(f, app))?;
+
+       if let Event::Key(key) = event::read()? {
+        //if key.kind == event::KeyEventKind::Release { //this if statement skips any event that is not a key press
+        //    continue;
+        //}
+            if key.kind == KeyEventKind::Press {
+                    match app.current_screen{
+                        CurrentScreen::table_screen => match key.code {
+                            KeyCode::Delete => {
+                                return Ok(true);
+                            }
+                            _ => {}
+                        }
+                        CurrentScreen::detail_screen => match key.code {
+                            KeyCode::Delete => {
+                                return Ok(true);
+                            }
+                            _ => {}
+                        },
+                        CurrentScreen::splash_screen => match key.code {
+                            KeyCode::Delete => {
+                                return Ok(true);
+                            }
+                            _ => {}
+                        }
+                    }
+                    
+            }
+        }
+    }        
+}
+
+
 
 fn main_menu() {
     loop {
@@ -133,25 +145,6 @@ fn main_menu() {
         }
     } // loop end
 }
-
-
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
-
-    loop { //draws the UI to the terminal
-        terminal.draw(|f| ui(f, app))?;
-
-       if let Event::Key(key) = event::read()? {
-        //if key.kind == event::KeyEventKind::Release { //this if statement skips any event that is not a key press
-        //    continue;
-        //}
-            if key.kind == KeyEventKind::Press {
-                    //event handler here
-                    }
-                }
-            }        
-       }
-
-
 
 fn add_task() {
     //******************          ADD FUNCTIONS        ****************************************************************************************************************
@@ -269,7 +262,7 @@ fn show_tasks(file_path: String) {
     }
 }
 
-fn read_json(file_path: String) -> Vec<Task> {
+pub fn read_json(file_path: String) -> Vec<Task> {
     //add an input for file path so that the archive file can also be read.
 
     let json_file_path = Path::new(&file_path); //file path of json
