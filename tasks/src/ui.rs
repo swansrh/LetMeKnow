@@ -125,17 +125,11 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
         );
 
     if let CurrentScreen::table_screen = app.current_screen{ //This checks whether the table is the current screen
-        let table_layout: std::rc::Rc<[Rect]> = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Percentage(95),
-            Constraint::Percentage(5)
-        ])
-        .split(frame.area());
-
-
-        let area_top = table_layout[0];
-        let area_bottom = table_layout[1];
+        let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
+        let recters = vertical.split(frame.area());
+        
+        let area_top = recters[0];
+        let area_bottom = recters[1];
         frame.render_widget(table, area_top);
         frame.render_widget(footer, area_bottom);    
     }
