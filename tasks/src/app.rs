@@ -23,7 +23,7 @@ pub struct App{
 impl App{
     pub fn new() -> App {
         App {
-            current_screen: CurrentScreen::table_screen,
+            current_screen: CurrentScreen::splash_screen,
         }
     }
 }

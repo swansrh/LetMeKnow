@@ -7,7 +7,7 @@ use ratatui::{
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Text, Span},
     widgets::{
-        Block, BorderType, Cell, HighlightSpacing, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState,
+        Block, BorderType, Cell, HighlightSpacing, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Borders,
     },
     DefaultTerminal, Frame,
 };
@@ -78,9 +78,8 @@ impl Task {
 }
 
 
-pub fn ui(frame: &mut Frame, app: &App) {
-    //let vertical = Layout::vertical([Constraint::Min(5), Constraint::Max(3)]);
-    let rects = frame.area();
+pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
+    let rects = frame.area(); 
 
     let data_raw = read_json("./data.json".to_string()); //reads in the json file
     let more_rows = data_raw.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json
@@ -104,25 +103,50 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .column_spacing(1)
         .style(Style::new().blue())
         .header(
-            //Row::new(vec!["ID", "Name", "Details", "StakeHolder", "Due", "Created", "State"])
             Row::new(vec!["ID", "Name", "Details", "Stake", "Due", "Created", "state"])
             .style(Style::new().bold())
-            .bottom_margin(1),
+            .bottom_margin(0),
             )
             .footer(Row::new(vec!["(Del) Quit"]))
-            .block(Block::new().title("LetMeKnow"))
             .highlight_style(Style::new().reversed())
             .highlight_symbol(">>");
     
-    if let CurrentScreen::table_screen = app.current_screen{ //ui components for the table  
+
+
+
+
+    if let CurrentScreen::table_screen = app.current_screen{ //This checks whether the table is the current screen
         let area = rects;
         frame.render_widget(table, area);
+    }
+
+    if let CurrentScreen::splash_screen = app.current_screen{ //this checks whether the splash screen is currently active
+        //splash screen UI here
+        let splash_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![
+            Constraint::Percentage(50),
+            Constraint::Percentage(50)
+        ])
+        .split(frame.area()); 
+
+        let b = Block::default() //block for top half
+            .borders(Borders::ALL)
+            .title("Top Half");
+        
+        let other_b = Block::default() //block for bottom half
+            .borders(Borders::ALL)
+            .title("Bottom Half");
+
+        let area = splash_layout[0];
+        let area_two = splash_layout[1];
+        
+        frame.render_widget(b, area);
+        frame.render_widget(other_b, area_two);
     }
 }
 
 pub fn read_json(file_path: String) -> Vec<Task> {
-    //add an input for file path so that the archive file can also be read.
-
     let json_file_path = Path::new(&file_path); //file path of json
     let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
                                                                                //println!("HERE");//debugging
