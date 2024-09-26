@@ -97,6 +97,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             KeyCode::Delete => {
                                 return Ok(true);
                             }
+                            KeyCode::Enter => {
+                                app.current_screen = CurrentScreen::table_screen;
+                            }
+                            
                             _ => {}
                         }
                     }

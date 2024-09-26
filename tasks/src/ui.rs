@@ -80,6 +80,7 @@ impl Task {
 
 pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
     let rects = frame.area(); 
+    let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
 
     let data_raw = read_json("./data.json".to_string()); //reads in the json file
     let more_rows = data_raw.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json
@@ -104,20 +105,39 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
         .style(Style::new().blue())
         .header(
             Row::new(vec!["ID", "Name", "Details", "Stake", "Due", "Created", "state"])
-            .style(Style::new().bold())
-            .bottom_margin(0),
+                .style(Style::new().bold())
+                .bottom_margin(0),
             )
-            .footer(Row::new(vec!["(Del) Quit"]))
             .highlight_style(Style::new().reversed())
             .highlight_symbol(">>");
     
-
-
-
+    let footer = Paragraph::new(Line::from(footer_text))
+        .style(
+            Style::new()
+                .bg(Color::Green)
+                .fg(Color::White),
+            )
+        .centered()
+        .block(
+            Block::bordered()
+                .border_type(BorderType::Double)
+                .border_style(Style::new().fg(Color::Blue))
+        );
 
     if let CurrentScreen::table_screen = app.current_screen{ //This checks whether the table is the current screen
-        let area = rects;
-        frame.render_widget(table, area);
+        let table_layout: std::rc::Rc<[Rect]> = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(vec![
+            Constraint::Percentage(95),
+            Constraint::Percentage(5)
+        ])
+        .split(frame.area());
+
+
+        let area_top = table_layout[0];
+        let area_bottom = table_layout[1];
+        frame.render_widget(table, area_top);
+        frame.render_widget(footer, area_bottom);    
     }
 
     if let CurrentScreen::splash_screen = app.current_screen{ //this checks whether the splash screen is currently active
