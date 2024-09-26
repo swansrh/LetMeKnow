@@ -28,8 +28,23 @@ pub struct Task {//all of these must be public to be used with the other functio
     pub state: String,
 }
 
+impl Default for Task {
+    //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
+    fn default() -> Task {
+        Task {
+            task_id: "Task ID".to_string(),
+            task_name: "Task Name".to_string(),
+            task_details: "Additional Details".to_string(),
+            stake_holder: "Stake Holders".to_string(),
+            due_date: "Date Due".to_string(),
+            date_created: "Date Due".to_string(),
+            state: "Current State".to_string(),
+        }
+    }
+}
+
 impl Task {
-    const fn ref_array(&self) -> [&String; 7]{
+    const fn ref_array(&self) -> [&String; 7] {
         [&self.task_id, &self.task_name, &self.task_details, &self.stake_holder, &self.due_date, &self.date_created, &self.state]
     }
 
@@ -60,22 +75,6 @@ impl Task {
     fn state(&self) -> &str {
         &self.state
     }
-
-}
-
-impl Default for Task {
-    //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
-    fn default() -> Task {
-        Task {
-            task_id: "Task ID".to_string(),
-            task_name: "Task Name".to_string(),
-            task_details: "Additional Details".to_string(),
-            stake_holder: "Stake Holders".to_string(),
-            due_date: "Date Due".to_string(),
-            date_created: "Date Due".to_string(),
-            state: "Current State".to_string(),
-        }
-    }
 }
 
 
@@ -83,28 +82,30 @@ pub fn ui(frame: &mut Frame, app: &App) {
     //let vertical = Layout::vertical([Constraint::Min(5), Constraint::Max(3)]);
     let rects = frame.area();
 
-    let rows = read_json("./data.json".to_string());
-    let other_rows = [
-        Row::new(vec!["Cell1", "Cell2", "Cell3"]),
-        Row::new(vec!["Cell4", "Cell5", "Cell6"]),
-        Row::new(vec!["Cell7", "Cell8", "Cell9"]),
-        Row::new(vec!["Cell10", "Cell11", "Cell12"]),
-        Row::new(vec!["Cell3", "Cell14", "Cell15"]),
-        Row::new(vec!["Cell16", "Cell17", "Cell18"]),
-        ];
- 
+    let data_raw = read_json("./data.json".to_string()); //reads in the json file
+    let more_rows = data_raw.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json
+        let item = data.ref_array(); //removes ID fields and just has the data
+        item.into_iter() //loop
+            .map(|content| Cell::from(Text::from(format!("\n{content}\n"))))//this is where it breaks it down to cells and creates the rows
+            .collect::<Row>()
+            .height(2)
+    });
     let width = [
-        Constraint::Length(5),
-        Constraint::Length(5),
-        Constraint::Length(5),
+        Constraint::Length(5 + 1),
+        Constraint::Length(25 + 1),
+        Constraint::Length(130 + 1),
+        Constraint::Length(20 + 1),
+        Constraint::Length(10 + 1),
+        Constraint::Length(10 + 1),
+        Constraint::Length(10),
     ];
 
-    let table = Table::new(other_rows, width)
+    let table = Table::new(more_rows, width)
         .column_spacing(1)
         .style(Style::new().blue())
         .header(
             //Row::new(vec!["ID", "Name", "Details", "StakeHolder", "Due", "Created", "State"])
-            Row::new(vec!["ID", "Name", "Details"])
+            Row::new(vec!["ID", "Name", "Details", "Stake", "Due", "Created", "state"])
             .style(Style::new().bold())
             .bottom_margin(1),
             )
@@ -117,7 +118,6 @@ pub fn ui(frame: &mut Frame, app: &App) {
         let area = rects;
         frame.render_widget(table, area);
     }
-
 }
 
 pub fn read_json(file_path: String) -> Vec<Task> {
