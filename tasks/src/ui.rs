@@ -1,4 +1,4 @@
-use color_eyre::Result;
+use color_eyre::{owo_colors::colors::xterm::DarkGray, Result};
 use color_eyre::owo_colors::OwoColorize;
 use itertools::Itertools;
 use ratatui::{
@@ -77,19 +77,41 @@ impl Task {
     }
 }
 
+pub struct TableColors {
+    regular_row_color: Color,
+    alt_row_color: Color,
+}
+
+impl TableColors {
+    const fn new() -> TableColors {
+        TableColors {
+            regular_row_color: Color::LightBlue, //regular row color
+            alt_row_color: Color::Blue, //alt row color
+        }
+    }
+}
 
 pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
     let rects = frame.area(); 
     let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
 
     let data_raw = read_json("./data.json".to_string()); //reads in the json file
-    let more_rows = data_raw.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json
+    
+    //next let statement is the definition of the rows
+    let more_rows = data_raw.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json, Use i to swap styles
+        
+        let color = match i % 2 {
+            0 => TableColors::new().regular_row_color,
+            _ => TableColors::new().alt_row_color,
+        };
         let item = data.ref_array(); //removes ID fields and just has the data
         item.into_iter() //loop
             .map(|content| Cell::from(Text::from(format!("\n{content}\n"))))//this is where it breaks it down to cells and creates the rows
             .collect::<Row>()
+            .style(Style::new().bg(color))
             .height(2)
     });
+
     let width = [
         Constraint::Length(5 + 1),
         Constraint::Length(25 + 1),
@@ -105,7 +127,7 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
         .style(Style::new().blue())
         .header(
             Row::new(vec!["ID", "Name", "Details", "Stake", "Due", "Created", "state"])
-                .style(Style::new().bold())
+                .style(Style::new().bold().bg(Color::DarkGray))
                 .bottom_margin(0),
             )
             .highlight_style(Style::new().reversed())
