@@ -152,7 +152,7 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Middle Section")
+                    .title("V .15")
             );
 
         let continue_text = Paragraph::new("(ENT) Enter to Continue / (Del) Delete to quit")
