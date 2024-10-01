@@ -3,11 +3,11 @@ use color_eyre::owo_colors::OwoColorize;
 use itertools::Itertools;
 use ratatui::{
     crossterm::event::{Event, KeyCode, KeyEventKind},
-    layout::{Constraint, Layout, Margin, Rect, Direction},
+    layout::{Constraint, Layout, Margin, Rect, Direction, Alignment},
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Text, Span},
     widgets::{
-        Block, BorderType, Cell, HighlightSpacing, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Borders,
+        Block, BorderType, Cell, HighlightSpacing, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Borders
     },
     DefaultTerminal, Frame,
 };
@@ -135,28 +135,47 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
     }
 
     if let CurrentScreen::splash_screen = app.current_screen{ //this checks whether the splash screen is currently active
-        //splash screen UI here
         let splash_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![
-            Constraint::Percentage(50),
-            Constraint::Percentage(50)
+            Constraint::Percentage(30),
+            Constraint::Min(5),
+            Constraint::Percentage(30)
         ])
-        .split(frame.area()); 
+        .split(frame.area());
 
         let b = Block::default() //block for top half
             .borders(Borders::ALL)
             .title("Top Half");
+
+        let b_middle = Block::default() //replace this with the paragraph block that will containt the title
+            .borders(Borders::ALL)
+            .title("Middle Section");
+
+        let title_text = Paragraph::new("          _                      _            \n         (_)                    | |           \n__      ___ _ __ ___  _ __    __| | _____   __\n\\ \\ /\\ / / | '__/ _ \\| '_ \\  / _` |/ _ \\ \\ / /\n \\ V  V /| | | | (_) | | | || (_| |  __/\\ V / \n  \\_/\\_/ |_|_|  \\___/|_| |_(_)__,_|\\___| \\_/  ")
+            .style(Style::default().fg(Color::White))
+            .alignment(Alignment::Center)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Middle Section")
+            );
         
         let other_b = Block::default() //block for bottom half
             .borders(Borders::ALL)
             .title("Bottom Half");
 
-        let area = splash_layout[0];
-        let area_two = splash_layout[1];
         
-        frame.render_widget(b, area);
+
+        let area = splash_layout[0];
+        let are_middle = splash_layout[1];
+        let area_two = splash_layout[2];
+        
+        frame.render_widget(title_text, are_middle);
         frame.render_widget(other_b, area_two);
+        frame.render_widget(b, area);
+        
+        
     }
 }
 
@@ -168,3 +187,16 @@ pub fn read_json(file_path: String) -> Vec<Task> {
         serde_json::from_reader(data_file).expect("Error while reading ./data.json");
     tasks
 }
+
+
+
+
+
+
+//("          _                      _            ");
+//("         (_)                    | |           ");
+//("__      ___ _ __ ___  _ __    __| | _____   __");
+//("\\ \\ /\\ / / | '__/ _ \\| '_ \\  / _` |/ _ \\ \\ / /");
+//(" \\ V  V /| | | | (_) | | | || (_| |  __/\\ V / ");
+//("  \\_/\\_/ |_|_|  \\___/|_| |_(_)__,_|\\___| \\_/  ");
+//("\nWelcome to Let Me know, the task management CLI tool")
