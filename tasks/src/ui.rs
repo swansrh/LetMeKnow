@@ -138,21 +138,15 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
         let splash_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![
-            Constraint::Percentage(30),
-            Constraint::Min(5),
-            Constraint::Percentage(30)
+            Constraint::Percentage(25),
+            Constraint::Min(10),
+            Constraint::Min(2)
         ])
         .split(frame.area());
 
-        let b = Block::default() //block for top half
-            .borders(Borders::ALL)
-            .title("Top Half");
+        let b = Block::default(); //block for top half
 
-        let b_middle = Block::default() //replace this with the paragraph block that will containt the title
-            .borders(Borders::ALL)
-            .title("Middle Section");
-
-        let title_text = Paragraph::new("          _                      _            \n         (_)                    | |           \n__      ___ _ __ ___  _ __    __| | _____   __\n\\ \\ /\\ / / | '__/ _ \\| '_ \\  / _` |/ _ \\ \\ / /\n \\ V  V /| | | | (_) | | | || (_| |  __/\\ V / \n  \\_/\\_/ |_|_|  \\___/|_| |_(_)__,_|\\___| \\_/  ")
+        let title_text = Paragraph::new("          _                      _            \n         (_)                    | |           \n__      ___ _ __ ___  _ __    __| | _____   __\n\\ \\ /\\ / / | '__/ _ \\| '_ \\  / _` |/ _ \\ \\ / /\n \\ V  V /| | | | (_) | | | || (_| |  __/\\ V / \n  \\_/\\_/ |_|_|  \\___/|_| |_(_)__,_|\\___| \\_/  \n\nWelcome to Let Me know, the task management CLI tool")
             .style(Style::default().fg(Color::White))
             .alignment(Alignment::Center)
             .block(
@@ -160,19 +154,22 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
                     .borders(Borders::ALL)
                     .title("Middle Section")
             );
-        
-        let other_b = Block::default() //block for bottom half
-            .borders(Borders::ALL)
-            .title("Bottom Half");
 
-        
+        let continue_text = Paragraph::new("(ENT) Enter to Continue / (Del) Delete to quit")
+            .style(Style::default())
+            .alignment(Alignment::Center)
+            .block(
+                Block::default()
+            );        
 
         let area = splash_layout[0];
         let are_middle = splash_layout[1];
-        let area_two = splash_layout[2];
+        let cont_area = splash_layout [2];
+        //let area_two = splash_layout[3];
         
         frame.render_widget(title_text, are_middle);
-        frame.render_widget(other_b, area_two);
+        //frame.render_widget(other_b, area_two);
+        frame.render_widget(continue_text, cont_area);
         frame.render_widget(b, area);
         
         
@@ -187,16 +184,3 @@ pub fn read_json(file_path: String) -> Vec<Task> {
         serde_json::from_reader(data_file).expect("Error while reading ./data.json");
     tasks
 }
-
-
-
-
-
-
-//("          _                      _            ");
-//("         (_)                    | |           ");
-//("__      ___ _ __ ___  _ __    __| | _____   __");
-//("\\ \\ /\\ / / | '__/ _ \\| '_ \\  / _` |/ _ \\ \\ / /");
-//(" \\ V  V /| | | | (_) | | | || (_| |  __/\\ V / ");
-//("  \\_/\\_/ |_|_|  \\___/|_| |_(_)__,_|\\___| \\_/  ");
-//("\nWelcome to Let Me know, the task management CLI tool")
