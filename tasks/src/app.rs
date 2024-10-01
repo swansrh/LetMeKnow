@@ -1,3 +1,5 @@
+use ratatui::widgets::TableState;
+
 pub enum CurrentScreen {
     table_screen,
     detail_screen,
