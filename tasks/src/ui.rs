@@ -91,11 +91,9 @@ impl TableColors {
     }
 }
 
-pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
+pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
     let rects = frame.area(); 
     let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
-
-    let mut state = TableState::default();
 
     let data_raw = read_json("./data.json".to_string()); //reads in the json file
     
@@ -155,7 +153,7 @@ pub fn ui(frame: &mut Frame, app: &App) {//defines the split in the layout
         let area_top = recters[0];
         let area_bottom = recters[1];
         //frame.render_widget(table, area_top); //not stateful
-        frame.render_stateful_widget(table, area_top, &mut state); //stateful but currently does nothing
+        frame.render_stateful_widget(table, area_top, &mut app.table_state); //stateful but currently does nothing
         frame.render_widget(footer, area_bottom);    
     }
 
