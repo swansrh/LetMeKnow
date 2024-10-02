@@ -95,10 +95,10 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
     let rects = frame.area(); 
     let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
 
-    let data_raw = read_json("./data.json".to_string()); //reads in the json file
+    //let data_raw = read_json("./data.json".to_string()); //reads in the json file
     
     //next let statement is the definition of the rows
-    let more_rows = data_raw.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json, Use i to swap styles
+    let more_rows = app.items.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json, Use i to swap styles
         
         let color = match i % 2 {
             0 => TableColors::new().regular_row_color,
@@ -197,13 +197,4 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
         
         
     }
-}
-
-pub fn read_json(file_path: String) -> Vec<Task> {
-    let json_file_path = Path::new(&file_path); //file path of json
-    let data_file: File = File::open(json_file_path).expect("File not found"); //opens the json file
-                                                                               //println!("HERE");//debugging
-    let tasks: Vec<Task> =
-        serde_json::from_reader(data_file).expect("Error while reading ./data.json");
-    tasks
 }
