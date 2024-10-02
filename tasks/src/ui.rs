@@ -130,7 +130,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
                 .style(Style::new().bold().bg(Color::DarkGray))
                 .bottom_margin(0),
             )
-            .highlight_style(Style::new().reversed())
+            .highlight_style(Style::new().bg(Color::White))
             .highlight_symbol(">>");
     
     let footer = Paragraph::new(Line::from(footer_text))

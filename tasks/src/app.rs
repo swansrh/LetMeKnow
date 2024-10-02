@@ -45,33 +45,7 @@ impl App{
 
 //table controls
 
-pub fn next(app: &mut App) {
-    let i = match app.table_state.selected() {
-        Some(i) => {
-            if i >= app.items.len() - 1 {
-                0
-            }else {
-                i + 1
-            }
-        }
-        None => 0,
-    };
-    app.table_state.select(Some(i));
-}
 
-pub fn previous(app: &mut App) {
-    let i = match app.table_state.selected() {
-        Some(i) => {
-            if i == 0 {
-                app.items.len() -1
-            }else {
-                i - 1
-            }
-        }
-        None => 0,
-    };
-    app.table_state.select(Some(i));
-}
 
 fn read_json(file_path: String) -> Vec<Task> {
     let json_file_path = Path::new(&file_path); //file path of json

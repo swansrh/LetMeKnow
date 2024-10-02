@@ -85,6 +85,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             KeyCode::Delete => {
                                 return Ok(true);
                             }
+                            KeyCode::Down => {
+                                next(app)
+                            }
+                            KeyCode::Up => {
+                                previous(app);
+                            }
                             _ => {}
                         }
                         CurrentScreen::detail_screen => match key.code {
@@ -110,6 +116,33 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     }        
 }
 
+pub fn next(app: &mut App) {
+    let i = match app.table_state.selected() {
+        Some(i) => {
+            if i >= app.items.len() - 1 {
+                0
+            }else {
+                i + 1
+            }
+        }
+        None => 0,
+    };
+    app.table_state.select(Some(i));
+}
+
+pub fn previous(app: &mut App) {
+    let i = match app.table_state.selected() {
+        Some(i) => {
+            if i == 0 {
+                app.items.len() -1
+            }else {
+                i - 1
+            }
+        }
+        None => 0,
+    };
+    app.table_state.select(Some(i));
+}
 
 
 fn main_menu() {
