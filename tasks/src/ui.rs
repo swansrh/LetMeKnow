@@ -145,16 +145,28 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
                 .border_type(BorderType::Double)
                 .border_style(Style::new().fg(Color::Blue))
         );
+    
+    let my_scroll = Scrollbar::default()
+        .orientation(ScrollbarOrientation::VerticalRight)
+        .begin_symbol(None)
+        .end_symbol(None);
 
     if let CurrentScreen::table_screen = app.current_screen{ //This checks whether the table is the current screen
         let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
         let recters = vertical.split(frame.area());
         
         let area_top = recters[0];
+        let area_scroll = recters[0];
         let area_bottom = recters[1];
         //frame.render_widget(table, area_top); //not stateful
         frame.render_stateful_widget(table, area_top, &mut app.table_state); //stateful but currently does nothing
-        frame.render_widget(footer, area_bottom);    
+        frame.render_stateful_widget(my_scroll, area_scroll.inner(
+            Margin {
+                vertical: 1,
+                horizontal: 1,
+            }
+        ), &mut app.scroll_state);
+        frame.render_widget(footer, area_bottom);  
     }
 
     if let CurrentScreen::splash_screen = app.current_screen{ //this checks whether the splash screen is currently active

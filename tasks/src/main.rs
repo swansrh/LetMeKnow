@@ -24,7 +24,7 @@ use ratatui::{
 mod app;
 mod ui;
 use crate::{
-    app::{App, CurrentScreen},
+    app::{App, CurrentScreen, ITEM_HEIGHT},
     ui::{ui, Task},
 };
 
@@ -128,6 +128,8 @@ pub fn next(app: &mut App) {
         None => 0,
     };
     app.table_state.select(Some(i));
+    app.scroll_state = app.scroll_state.position(i * ITEM_HEIGHT);
+
 }
 
 pub fn previous(app: &mut App) {
@@ -142,6 +144,7 @@ pub fn previous(app: &mut App) {
         None => 0,
     };
     app.table_state.select(Some(i));
+    app.scroll_state = app.scroll_state.position(i * ITEM_HEIGHT);
 }
 
 
