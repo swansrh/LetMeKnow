@@ -1,25 +1,26 @@
-use color_eyre::{owo_colors::colors::xterm::DarkGray, Result};
 use color_eyre::owo_colors::OwoColorize;
+use color_eyre::{owo_colors::colors::xterm::DarkGray, Result};
 use itertools::Itertools;
 use ratatui::{
     crossterm::event::{Event, KeyCode, KeyEventKind},
-    layout::{Constraint, Layout, Margin, Rect, Direction, Alignment},
+    layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
     style::{Color, Modifier, Style, Stylize},
-    text::{Line, Text, Span},
+    text::{Line, Span, Text},
     widgets::{
-        Block, BorderType, Cell, HighlightSpacing, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Borders
+        Block, BorderType, Borders, Cell, HighlightSpacing, Paragraph, Row, Scrollbar,
+        ScrollbarOrientation, ScrollbarState, Table, TableState,
     },
     DefaultTerminal, Frame,
 };
 
+use crate::app::{App, CurrentScreen};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::Path;
-use crate::app::{App, CurrentScreen};
-
 
 #[derive(Debug, Deserialize, Serialize, Clone)] //data type of the data being imported
-pub struct Task {//all of these must be public to be used with the other functions found in main.rs
+pub struct Task {
+    //all of these must be public to be used with the other functions found in main.rs
     pub task_id: String,
     pub task_name: String,
     pub task_details: String,
@@ -46,7 +47,15 @@ impl Default for Task {
 
 impl Task {
     const fn ref_array(&self) -> [&String; 7] {
-        [&self.task_id, &self.task_name, &self.task_details, &self.stake_holder, &self.due_date, &self.date_created, &self.state]
+        [
+            &self.task_id,
+            &self.task_name,
+            &self.task_details,
+            &self.stake_holder,
+            &self.due_date,
+            &self.date_created,
+            &self.state,
+        ]
     }
 
     fn task_id(&self) -> &str {
@@ -87,98 +96,102 @@ impl TableColors {
     const fn new() -> TableColors {
         TableColors {
             regular_row_color: Color::LightBlue, //regular row color
-            alt_row_color: Color::Blue, //alt row color
+            alt_row_color: Color::Blue,          //alt row color
         }
     }
 }
 
-pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
-    let rects = frame.area(); 
-    let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
+pub fn ui(frame: &mut Frame, app: &mut App) {
+    if let CurrentScreen::table_screen = app.current_screen {
+        //defines the split in the layout
 
-    //let data_raw = read_json("./data.json".to_string()); //reads in the json file
-    
-    //next let statement is the definition of the rows
-    let more_rows = app.items.iter().enumerate().map(|(i, data)| { //enumrates over each line of the json, Use i to swap styles
-        
-        let color = match i % 2 {
-            0 => TableColors::new().regular_row_color,
-            _ => TableColors::new().alt_row_color,
-        };
-        let item = data.ref_array(); //removes ID fields and just has the data
-        item.into_iter() //loop
-            .map(|content| Cell::from(Text::from(format!("\n{content}\n"))))//this is where it breaks it down to cells and creates the rows
-            .collect::<Row>()
-            .style(Style::new().bg(color))
-            .height(2)
-    });
+        let rects = frame.area();
+        let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
 
-    let width = [
-        Constraint::Length(5 + 1),
-        Constraint::Length(25 + 1),
-        Constraint::Length(130 + 1),
-        Constraint::Length(20 + 1),
-        Constraint::Length(10 + 1),
-        Constraint::Length(10 + 1),
-        Constraint::Length(10),
-    ];
+        //let data_raw = read_json("./data.json".to_string()); //reads in the json file
 
-    let table = Table::new(more_rows, width)
-        .column_spacing(1)
-        .style(Style::new().blue())
-        .header(
-            Row::new(vec!["ID", "Name", "Details", "Stake", "Due", "Created", "state"])
+        //next let statement is the definition of the rows
+        let more_rows = app.items.iter().enumerate().map(|(i, data)| {
+            //enumrates over each line of the json, Use i to swap styles
+
+            let color = match i % 2 {
+                0 => TableColors::new().regular_row_color,
+                _ => TableColors::new().alt_row_color,
+            };
+            let item = data.ref_array(); //removes ID fields and just has the data
+            item.into_iter() //loop
+                .map(|content| Cell::from(Text::from(format!("\n{content}\n")))) //this is where it breaks it down to cells and creates the rows
+                .collect::<Row>()
+                .style(Style::new().bg(color))
+                .height(2)
+        });
+
+        let width = [
+            Constraint::Length(5 + 1),
+            Constraint::Length(25 + 1),
+            Constraint::Length(130 + 1),
+            Constraint::Length(20 + 1),
+            Constraint::Length(10 + 1),
+            Constraint::Length(10 + 1),
+            Constraint::Length(10),
+        ];
+
+        let table = Table::new(more_rows, width)
+            .column_spacing(1)
+            .style(Style::new().blue())
+            .header(
+                Row::new(vec![
+                    "ID", "Name", "Details", "Stake", "Due", "Created", "state",
+                ])
                 .style(Style::new().bold().bg(Color::DarkGray))
                 .bottom_margin(0),
             )
             .highlight_style(Style::new().bg(Color::White))
             .highlight_symbol(">>");
-    
-    let footer = Paragraph::new(Line::from(footer_text))
-        .style(
-            Style::new()
-                .bg(Color::Green)
-                .fg(Color::White),
-            )
-        .centered()
-        .block(
-            Block::bordered()
-                .border_type(BorderType::Double)
-                .border_style(Style::new().fg(Color::Blue))
-        );
-    
-    let my_scroll = Scrollbar::default()
-        .orientation(ScrollbarOrientation::VerticalRight)
-        .begin_symbol(None)
-        .end_symbol(None);
 
-    if let CurrentScreen::table_screen = app.current_screen{ //This checks whether the table is the current screen
+        let footer = Paragraph::new(Line::from(footer_text))
+            .style(Style::new().bg(Color::Green).fg(Color::White))
+            .centered()
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Double)
+                    .border_style(Style::new().fg(Color::Blue)),
+            );
+
+        let my_scroll = Scrollbar::default()
+            .orientation(ScrollbarOrientation::VerticalRight)
+            .begin_symbol(None)
+            .end_symbol(None);
+        //This checks whether the table is the current screen
         let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
         let recters = vertical.split(frame.area());
-        
+
         let area_top = recters[0];
         let area_scroll = recters[0];
         let area_bottom = recters[1];
         //frame.render_widget(table, area_top); //not stateful
         frame.render_stateful_widget(table, area_top, &mut app.table_state); //stateful but currently does nothing
-        frame.render_stateful_widget(my_scroll, area_scroll.inner(
-            Margin {
+        frame.render_stateful_widget(
+            my_scroll,
+            area_scroll.inner(Margin {
                 vertical: 1,
                 horizontal: 1,
-            }
-        ), &mut app.scroll_state);
+            }),
+            &mut app.scroll_state,
+        );
         frame.render_widget(footer, area_bottom);
     }
 
-    if let CurrentScreen::splash_screen = app.current_screen{ //this checks whether the splash screen is currently active
+    if let CurrentScreen::splash_screen = app.current_screen {
+        //this checks whether the splash screen is currently active
         let splash_layout: std::rc::Rc<[Rect]> = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Percentage(25),
-            Constraint::Min(10),
-            Constraint::Min(2)
-        ])
-        .split(frame.area());
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Percentage(25),
+                Constraint::Min(10),
+                Constraint::Min(2),
+            ])
+            .split(frame.area());
 
         let b = Block::default(); //block for top half
 
@@ -194,51 +207,48 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
         let continue_text = Paragraph::new("(ENT) Enter to Continue / (Del) Delete to quit")
             .style(Style::default())
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-            );        
+            .block(Block::default());
 
         let area = splash_layout[0];
         let are_middle = splash_layout[1];
-        let cont_area = splash_layout [2];
+        let cont_area = splash_layout[2];
         //let area_two = splash_layout[3];
-        
+
         frame.render_widget(title_text, are_middle);
         //frame.render_widget(other_b, area_two);
         frame.render_widget(continue_text, cont_area);
         frame.render_widget(b, area);
     }
 
-    if let CurrentScreen::new_screen = app.current_screen { //render this when the current screen is equal to the new_screen
-        
+    if let CurrentScreen::new_screen = app.current_screen {
+        //render this when the current screen is equal to the new_screen
+        let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm";
+
         let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
         let recters = vertical.split(frame.area());
 
+        let area_outer = recters[0];
         let area_footer = recters[1];
 
         let new_footer = Paragraph::new(Line::from(footer_text))
-        .style(
-            Style::new()
-                .bg(Color::Green)
-                .fg(Color::White),
-            )
-        .centered()
-        .block(
-            Block::bordered()
-                .border_type(BorderType::Double)
-                .border_style(Style::new().fg(Color::Blue))
-        );
-    
+            .style(Style::new().bg(Color::Green).fg(Color::White))
+            .centered()
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Double)
+                    .border_style(Style::new().fg(Color::Blue)),
+            );
+
         let outer_block = Block::new()
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .title("New Entry");
 
+        frame.render_widget(outer_block, area_outer);
         frame.render_widget(new_footer, area_footer);
         //frame.render_widget(outer_block, area); //placeholder
     }
 
-    if let CurrentScreen::detail_screen = app.current_screen{ //render this when the current screen is equal to the detail_screen
-
+    if let CurrentScreen::detail_screen = app.current_screen { //render this when the current screen is equal to the detail_screen
     }
 }
