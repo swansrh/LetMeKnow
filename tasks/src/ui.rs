@@ -17,6 +17,7 @@ use std::fs::File;
 use std::path::Path;
 use crate::app::{App, CurrentScreen};
 
+
 #[derive(Debug, Deserialize, Serialize, Clone)] //data type of the data being imported
 pub struct Task {//all of these must be public to be used with the other functions found in main.rs
     pub task_id: String,
@@ -166,11 +167,11 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
                 horizontal: 1,
             }
         ), &mut app.scroll_state);
-        frame.render_widget(footer, area_bottom);  
+        frame.render_widget(footer, area_bottom);
     }
 
     if let CurrentScreen::splash_screen = app.current_screen{ //this checks whether the splash screen is currently active
-        let splash_layout = Layout::default()
+        let splash_layout: std::rc::Rc<[Rect]> = Layout::default()
         .direction(Direction::Vertical)
         .constraints(vec![
             Constraint::Percentage(25),
@@ -206,7 +207,38 @@ pub fn ui(frame: &mut Frame, app: &mut App) {//defines the split in the layout
         //frame.render_widget(other_b, area_two);
         frame.render_widget(continue_text, cont_area);
         frame.render_widget(b, area);
+    }
+
+    if let CurrentScreen::new_screen = app.current_screen { //render this when the current screen is equal to the new_screen
         
-        
+        let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
+        let recters = vertical.split(frame.area());
+
+        let area_footer = recters[1];
+
+        let new_footer = Paragraph::new(Line::from(footer_text))
+        .style(
+            Style::new()
+                .bg(Color::Green)
+                .fg(Color::White),
+            )
+        .centered()
+        .block(
+            Block::bordered()
+                .border_type(BorderType::Double)
+                .border_style(Style::new().fg(Color::Blue))
+        );
+    
+        let outer_block = Block::new()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .title("New Entry");
+
+        frame.render_widget(new_footer, area_footer);
+        //frame.render_widget(outer_block, area); //placeholder
+    }
+
+    if let CurrentScreen::detail_screen = app.current_screen{ //render this when the current screen is equal to the detail_screen
+
     }
 }

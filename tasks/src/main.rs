@@ -91,11 +91,21 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             KeyCode::Up => {
                                 previous(app);
                             }
+                            KeyCode::Enter => {
+                                app.current_screen = CurrentScreen::detail_screen;
+                            }
+                            KeyCode::Char('n') => {
+                                app.current_screen = CurrentScreen::new_screen;
+                            }
+
                             _ => {}
                         }
                         CurrentScreen::detail_screen => match key.code {
                             KeyCode::Delete => {
                                 return Ok(true);
+                            }
+                            KeyCode::Esc => {
+                                app.current_screen = CurrentScreen::table_screen;
                             }
                             _ => {}
                         },
@@ -107,6 +117,18 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                                 app.current_screen = CurrentScreen::table_screen;
                             }
                             
+                            _ => {}
+                        }
+                        CurrentScreen::new_screen => match key.code {
+                            KeyCode::Esc => {
+                                app.current_screen = CurrentScreen::table_screen;
+                            }
+                            KeyCode::Enter => {
+                                app.current_screen = CurrentScreen::table_screen;
+                            }
+                            KeyCode::Delete => {
+                                return Ok(true);
+                            }
                             _ => {}
                         }
                     }

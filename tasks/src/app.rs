@@ -8,14 +8,20 @@ use crate::{
 };
 
 pub const ITEM_HEIGHT: usize = 4;
+
 pub enum CurrentScreen {
     table_screen,
     detail_screen,
     splash_screen,
+    new_screen,
 }
 
 struct table_screen{
 
+}
+
+struct new_screen{
+    
 }
 
 struct detail_screen{
