@@ -1,22 +1,22 @@
-use color_eyre::owo_colors::OwoColorize;
-use color_eyre::{owo_colors::colors::xterm::DarkGray, Result};
-use itertools::Itertools;
+//use color_eyre::owo_colors::OwoColorize;
+//use color_eyre::{owo_colors::colors::xterm::DarkGray, Result};
+//use itertools::Itertools;
 use ratatui::{
-    crossterm::event::{Event, KeyCode, KeyEventKind},
+    //crossterm::event::{Event, KeyCode, KeyEventKind},
     layout::{Alignment, Constraint, Direction, Layout, Margin, Rect},
-    style::{Color, Modifier, Style, Stylize},
-    text::{Line, Span, Text},
+    style::{Color, Style, Stylize},
+    text::{Line, Text},
     widgets::{
-        Block, BorderType, Borders, Cell, HighlightSpacing, Paragraph, Row, Scrollbar,
-        ScrollbarOrientation, ScrollbarState, Table, TableState,
-    },
-    DefaultTerminal, Frame,
+        Block, BorderType, Borders, Cell, Paragraph, Row, Scrollbar,
+        ScrollbarOrientation, Table,
+    }, Frame,
 };
 
 use crate::app::{App, CurrentScreen};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::path::Path;
+//use std::alloc::LayoutError;
+//use std::fs::File;
+//use std::path::Path;
 
 #[derive(Debug, Deserialize, Serialize, Clone)] //data type of the data being imported
 pub struct Task {
@@ -34,13 +34,13 @@ impl Default for Task {
     //This implements default values for the Task type. This is a default set of values that can be used to intialiuse the variable. Used for the creation Process https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421
     fn default() -> Task {
         Task {
-            task_id: "Task ID".to_string(),
-            task_name: "Task Name".to_string(),
-            task_details: "Additional Details".to_string(),
-            stake_holder: "Stake Holders".to_string(),
-            due_date: "Date Due".to_string(),
-            date_created: "Date Due".to_string(),
-            state: "Current State".to_string(),
+            task_id: "Prefilled Task ID".to_string(),
+            task_name: "Input task name".to_string(),
+            task_details: "Input task details".to_string(),
+            stake_holder: "Input stake holder".to_string(),
+            due_date: "input due date".to_string(),
+            date_created: "Prefilled Date Created".to_string(),
+            state: "Prefilled Current State".to_string(),
         }
     }
 }
@@ -106,9 +106,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
         //defines the split in the layout
 
         let rects = frame.area();
-        let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page";
-
-        //let data_raw = read_json("./data.json".to_string()); //reads in the json file
+        let footer_text = "(Del) Exit Program / (N) New Entry / (Ent) Details Page / (↑) Up / (↓) Down";
 
         //next let statement is the definition of the rows
         let more_rows = app.items.iter().enumerate().map(|(i, data)| {
@@ -182,7 +180,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
         frame.render_widget(footer, area_bottom);
     }
 
-    if let CurrentScreen::splash_screen = app.current_screen {
+    if let CurrentScreen::splash_screen = app.current_screen { //Splash screen that shows on program start
         //this checks whether the splash screen is currently active
         let splash_layout: std::rc::Rc<[Rect]> = Layout::default()
             .direction(Direction::Vertical)
@@ -220,15 +218,26 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
         frame.render_widget(b, area);
     }
 
-    if let CurrentScreen::new_screen = app.current_screen {
-        //render this when the current screen is equal to the new_screen
+    if let CurrentScreen::new_screen = app.current_screen { //screen that is shown when creating a new task
+        //create a default of the Task struct that can be used to fill out the form
         let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm";
-
         let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
         let recters = vertical.split(frame.area());
 
+        let fresh_data = Task {
+            ..Default::default()
+        };
+
         let area_outer = recters[0];
         let area_footer = recters[1];
+
+        let inner_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec!{
+                Constraint::Percentage(25),
+                Constraint::Percentage(75),
+                })
+            .split(area_outer);
 
         let new_footer = Paragraph::new(Line::from(footer_text))
             .style(Style::new().bg(Color::Green).fg(Color::White))
@@ -238,17 +247,77 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                     .border_type(BorderType::Double)
                     .border_style(Style::new().fg(Color::Blue)),
             );
-
+        
         let outer_block = Block::new()
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .title("New Entry");
 
-        frame.render_widget(outer_block, area_outer);
+        //frame.render_widget(outer_block, area_outer);
+
+
+        
+        frame.render_widget(id_title, inner_layout[0]);
+        frame.render_widget(id_data, inner_layout[1]);
+
+
+
         frame.render_widget(new_footer, area_footer);
-        //frame.render_widget(outer_block, area); //placeholder
     }
 
-    if let CurrentScreen::detail_screen = app.current_screen { //render this when the current screen is equal to the detail_screen
+    if let CurrentScreen::detail_screen = app.current_screen { //Detail Screen that shows further details and allows editing of the task
+        let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm Changes / (↑) Up / (↓) Down";
+
+        let vertical = &Layout::vertical([Constraint::Min(5), Constraint::Length(3)]);
+        let recters = vertical.split(frame.area());
+        
+        let foot_me = recters[1];
+        
+        let edit_footer = Paragraph::new(Line::from(footer_text))
+            .style(Style::new().bg(Color::Green).fg(Color::White))
+            .centered()
+            .block(
+                Block::bordered()
+                    .border_type(BorderType::Double)
+                    .border_style(Style::new().fg(Color::Blue)),
+            );
+        
+        frame.render_widget(edit_footer, foot_me);
     }
+}
+
+fn render_new_page() {
+    let titles = &["Task ID", "Task Name", "Task Details", "Stake Holder", "Due Date", "Date_Created", "State"];
+
+    for x in 1..8 { //dynamic rendering maybe?
+        let l_side = titles[x-1];
+        let mut r_side = &String::new();
+        match x {
+            1 => r_side = &fresh_data.task_id,
+            2 => r_side = &fresh_data.task_name,
+            3 => r_side = &fresh_data.task_details,
+            4 => r_side = &fresh_data.stake_holder,
+            5 => r_side = &fresh_data.due_date,
+            6 => r_side = &fresh_data.date_created,
+            7 => r_side = &fresh_data.state,
+            _ => {}
+        }
+    }
+
+
+    let id_title = Paragraph::new(l_side)
+    .style(Style::default().fg(Color::White))
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+    );
+
+    let id_data = Paragraph::new(r_side.to_string())
+    .style(Style::default().fg(Color::White))
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+    );
 }

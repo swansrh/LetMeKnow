@@ -1,5 +1,5 @@
-use ratatui::widgets::{ScrollbarState, Table, TableState};
-use serde::{Deserialize, Serialize};
+use ratatui::widgets::{ScrollbarState, TableState};
+//use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::path::Path;
 
