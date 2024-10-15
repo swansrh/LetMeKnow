@@ -182,6 +182,8 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
 
     if let CurrentScreen::splash_screen = app.current_screen { //Splash screen that shows on program start
         //this checks whether the splash screen is currently active
+        let version_number = String::from("V .15");
+        
         let splash_layout: std::rc::Rc<[Rect]> = Layout::default()
             .direction(Direction::Vertical)
             .constraints(vec![
@@ -199,7 +201,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("V .15")
+                    .title(version_number)
             );
 
         let continue_text = Paragraph::new("(ENT) Enter to Continue / (Del) Delete to quit")
@@ -221,26 +223,24 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
     if let CurrentScreen::new_screen = app.current_screen { //screen that is shown when creating a new task
         //create a default of the Task struct that can be used to fill out the form
         let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm";
-        let vertical = &Layout::vertical([Constraint::Min(5),Constraint::Min(5),Constraint::Min(5),Constraint::Min(5),Constraint::Min(5),Constraint::Min(5),Constraint::Min(5), Constraint::Length(3)]);
+        let vertical = &Layout::vertical([
+            Constraint::Min(2), //1
+            Constraint::Min(2), //2
+            Constraint::Min(2), //3
+            Constraint::Min(2), //4
+            Constraint::Min(2), //5
+            Constraint::Min(2), //6
+            Constraint::Min(2), //7
+            Constraint::Length(3) //footer
+        ]);
         let recters = vertical.split(frame.area());
 
         let fresh_data = Task {
             ..Default::default()
         };
 
-        let area_outer = recters[0];
-        let area_footer = recters[1];
-
-        let inner_layout = Layout::default() //this is for splitting into two columns, 25% left and 75% right
-            .direction(Direction::Horizontal)
-            .constraints(vec!{
-                Constraint::Percentage(25),
-                Constraint::Percentage(75),
-                })
-            .split(area_outer);
-
-        let area_left = inner_layout[0];
-        let are_right = inner_layout[1];
+        //let area_outer = recters[0];
+        let area_footer = recters[7];
 
         let new_footer = Paragraph::new(Line::from(footer_text))
             .style(Style::new().bg(Color::Green).fg(Color::White))
@@ -255,29 +255,17 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .title("New Entry");
-
         
         // need the below seven times
-        frame.render_widget(render_left(i32::from(1)), area_left);
-        frame.render_widget(render_right(i32::from(1), &fresh_data), are_right);
-
-        frame.render_widget(render_left(i32::from(2)), area_left);
-        frame.render_widget(render_right(i32::from(2), &fresh_data), are_right);
-
-        frame.render_widget(render_left(i32::from(3)), area_left);
-        frame.render_widget(render_right(i32::from(3), &fresh_data), are_right);
-
-        frame.render_widget(render_left(i32::from(4)), area_left);
-        frame.render_widget(render_right(i32::from(4), &fresh_data), are_right);
-
-        frame.render_widget(render_left(i32::from(5)), area_left);
-        frame.render_widget(render_right(i32::from(5), &fresh_data), are_right);
-
-        frame.render_widget(render_left(i32::from(6)), area_left);
-        frame.render_widget(render_right(i32::from(6), &fresh_data), are_right);
-
-        frame.render_widget(render_left(i32::from(7)), area_left);
-        frame.render_widget(render_right(i32::from(7), &fresh_data), are_right);
+        
+        frame.render_widget(render_input_box(i32::from(1), &fresh_data), recters[0]);
+        frame.render_widget(render_input_box(i32::from(2), &fresh_data), recters[1]);
+        frame.render_widget(render_input_box(i32::from(3), &fresh_data), recters[2]);
+        frame.render_widget(render_input_box(i32::from(4), &fresh_data), recters[3]);
+        frame.render_widget(render_input_box(i32::from(5), &fresh_data), recters[4]);
+        frame.render_widget(render_input_box(i32::from(6), &fresh_data), recters[5]);
+        frame.render_widget(render_input_box(i32::from(7), &fresh_data), recters[6]);
+        
         //
         frame.render_widget(new_footer, area_footer);
     }
@@ -302,9 +290,16 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
     }
 }
 
-fn render_left(x: i32) -> Paragraph<'static>{
+fn render_input_box(x: i32, freshers: &Task) -> Paragraph<'static>{
     let titles = ["Task ID", "Task Name", "Task Details", "Stake Holder", "Due Date", "Date_Created", "State"];
+    
+    //testing
+    //let mut l_side = String::from(titles[0]);
+    //let mut r_side = &String::from(&freshers.task_id);
+
     let mut l_side = String::new();
+    let mut r_side = &String::new();
+
     match x {
         1 => l_side = titles[0].to_string(),
         2 => l_side = titles[1].to_string(),
@@ -316,35 +311,24 @@ fn render_left(x: i32) -> Paragraph<'static>{
         _ => {}
     }
 
-    let id_title = Paragraph::new(l_side.to_string())
+    match x {
+        1 => r_side = &freshers.task_id,
+        2 => r_side = &freshers.task_name,
+        3 => r_side = &freshers.task_details,
+        4 => r_side = &freshers.stake_holder,
+        5 => r_side = &freshers.due_date,
+        6 => r_side = &freshers.date_created,
+        7 => r_side = &freshers.state,
+        _ => {}
+    }
+    
+    let input_box = Paragraph::new(String::from(r_side)) //r_side.to_string()
     .style(Style::default().fg(Color::White))
     .block(
         Block::default()
+            .title(String::from(l_side)) //String::from(l_side)
             .borders(Borders::ALL)
-            .border_type(BorderType::Rounded)
     );
-    return id_title;
-}
+    return input_box;
 
-fn render_right(x: i32, freshers: &Task) -> Paragraph<'static>{
-        let mut r_side = &String::new();
-        match x {
-            1 => r_side = &freshers.task_id,
-            2 => r_side = &freshers.task_name,
-            3 => r_side = &freshers.task_details,
-            4 => r_side = &freshers.stake_holder,
-            5 => r_side = &freshers.due_date,
-            6 => r_side = &freshers.date_created,
-            7 => r_side = &freshers.state,
-            _ => {}
-        }
-
-    let id_data: Paragraph<'_> = Paragraph::new(r_side.to_string())
-    .style(Style::default().fg(Color::White))
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded)
-    );
-    return id_data;
 }
