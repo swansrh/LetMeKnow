@@ -257,15 +257,13 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
             .title("New Entry");
         
         // need the below seven times
-        
-        frame.render_widget(render_input_box(i32::from(1), &fresh_data), recters[0]);
-        frame.render_widget(render_input_box(i32::from(2), &fresh_data), recters[1]);
-        frame.render_widget(render_input_box(i32::from(3), &fresh_data), recters[2]);
-        frame.render_widget(render_input_box(i32::from(4), &fresh_data), recters[3]);
-        frame.render_widget(render_input_box(i32::from(5), &fresh_data), recters[4]);
-        frame.render_widget(render_input_box(i32::from(6), &fresh_data), recters[5]);
-        frame.render_widget(render_input_box(i32::from(7), &fresh_data), recters[6]);
-        
+        //frame.render_widget(render_input_box(i32::from(1), &fresh_data), recters[0]);
+        //frame.render_widget(render_input_box(i32::from(2), &fresh_data), recters[1]);
+        //frame.render_widget(render_input_box(i32::from(3), &fresh_data), recters[2]);
+        //frame.render_widget(render_input_box(i32::from(4), &fresh_data), recters[3]);
+        //frame.render_widget(render_input_box(i32::from(5), &fresh_data), recters[4]);
+        //frame.render_widget(render_input_box(i32::from(6), &fresh_data), recters[5]);
+        //frame.render_widget(render_input_box(i32::from(7), &fresh_data), recters[6]);
         //
         frame.render_widget(new_footer, area_footer);
     }
