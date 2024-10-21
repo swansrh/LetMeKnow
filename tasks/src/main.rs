@@ -24,7 +24,7 @@ use ratatui::{
 mod app;
 mod ui;
 use crate::{
-    app::{App, CurrentScreen, ITEM_HEIGHT},
+    app::{App, CurrentScreen, ITEM_HEIGHT, CurrentlyEditing},
     ui::{ui, Task},
 };
 
@@ -96,6 +96,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             }
                             KeyCode::Char('n') => {
                                 app.current_screen = CurrentScreen::new_screen;
+                                app.currently_editing = Some(CurrentlyEditing::First);
                             }
 
                             _ => {}
@@ -120,15 +121,62 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             _ => {}
                         }
                         CurrentScreen::new_screen => match key.code {
+                            KeyCode::Enter => { //this controls which item is currently being edited
+                                if let Some(editing) = &app.currently_editing {
+                                    match editing {
+                                        CurrentlyEditing::First => {
+                                            app.currently_editing = Some(CurrentlyEditing::Second);
+                                        }
+                                        CurrentlyEditing::Second => {
+                                            app.currently_editing = Some(CurrentlyEditing::Third);
+                                        }
+                                        CurrentlyEditing::Third => {
+                                            app.save_values();//save function here
+                                            app.current_screen = CurrentScreen::table_screen;
+                                        }
+                                    }
+                                }
+                            },
+                            KeyCode::Tab => {
+                                app.toggle_editing();
+                            },
+                            KeyCode::Backspace => { //this does the backspaces for the input
+                                if let Some(editing) = &app.currently_editing {
+                                    match editing {
+                                        CurrentlyEditing::First => {
+                                            app.first_input.pop();
+                                        },
+                                        CurrentlyEditing::Second => {
+                                            app.second_input.pop();
+                                        },
+                                        CurrentlyEditing::Third => {
+                                            app.third_input.pop();
+                                        }
+                                    }
+                                }
+                            },
+                            KeyCode::Char(value) => { //this is the actual input of characters
+                                if let Some(editing) = &app.currently_editing {
+                                    match editing {
+                                        CurrentlyEditing::First => {
+                                            app.first_input.push(value);
+                                        },
+                                        CurrentlyEditing::Second => {
+                                            app.second_input.push(value);
+                                        },
+                                        CurrentlyEditing::Third => {
+                                            app.third_input.push(value);
+                                        }
+                                    }
+                                }
+                            },
                             KeyCode::Esc => {
                                 app.current_screen = CurrentScreen::table_screen;
-                            }
-                            KeyCode::Enter => {
-                                app.current_screen = CurrentScreen::table_screen;
-                            }
+                                app.currently_editing = None;
+                            },
                             KeyCode::Delete => {
                                 return Ok(true);
-                            }
+                            },
                             _ => {}
                         }
                     }

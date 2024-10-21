@@ -12,7 +12,7 @@ use ratatui::{
     }, Frame,
 };
 
-use crate::app::{App, CurrentScreen};
+use crate::app::{App, CurrentScreen, CurrentlyEditing};
 use serde::{Deserialize, Serialize};
 //use std::alloc::LayoutError;
 //use std::fs::File;
@@ -220,27 +220,18 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
         frame.render_widget(b, area);
     }
 
-    if let CurrentScreen::new_screen = app.current_screen { //screen that is shown when creating a new task
-        //create a default of the Task struct that can be used to fill out the form
+    if let Some(editing) = &app.currently_editing {
         let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm";
         let vertical = &Layout::vertical([
             Constraint::Min(2), //1
             Constraint::Min(2), //2
             Constraint::Min(2), //3
-            Constraint::Min(2), //4
-            Constraint::Min(2), //5
-            Constraint::Min(2), //6
-            Constraint::Min(2), //7
             Constraint::Length(3) //footer
         ]);
         let recters = vertical.split(frame.area());
 
-        let fresh_data = Task {
-            ..Default::default()
-        };
-
         //let area_outer = recters[0];
-        let area_footer = recters[7];
+        let area_footer = recters[3];
 
         let new_footer = Paragraph::new(Line::from(footer_text))
             .style(Style::new().bg(Color::Green).fg(Color::White))
@@ -251,22 +242,75 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                     .border_style(Style::new().fg(Color::Blue)),
             );
         
-        let outer_block = Block::new()
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded)
-            .title("New Entry");
+        let mut input_block_one = Block::default().title("TITLE").borders(Borders::ALL);
+        let mut input_block_two = Block::default().title("TITLE").borders(Borders::ALL);
+        let mut input_block_three = Block::default().title("TITLE").borders(Borders::ALL);
+        let active_style = Style::default().bg(Color::LightBlue).fg(Color::Black);
+
+        match editing {
+            CurrentlyEditing::First => input_block_one = input_block_one.style(active_style),
+            CurrentlyEditing::Second => input_block_two =  input_block_two.style(active_style),
+            CurrentlyEditing::Third => input_block_three = input_block_three.style(active_style),
+        };
+
+        let first_text = Paragraph::new(app.first_input.clone()).block(input_block_one);
+        let second_text = Paragraph::new(app.second_input.clone()).block(input_block_two);
+        let third_text = Paragraph::new(app.third_input.clone()).block(input_block_three);
         
-        // need the below seven times
-        //frame.render_widget(render_input_box(i32::from(1), &fresh_data), recters[0]);
-        //frame.render_widget(render_input_box(i32::from(2), &fresh_data), recters[1]);
-        //frame.render_widget(render_input_box(i32::from(3), &fresh_data), recters[2]);
-        //frame.render_widget(render_input_box(i32::from(4), &fresh_data), recters[3]);
-        //frame.render_widget(render_input_box(i32::from(5), &fresh_data), recters[4]);
-        //frame.render_widget(render_input_box(i32::from(6), &fresh_data), recters[5]);
-        //frame.render_widget(render_input_box(i32::from(7), &fresh_data), recters[6]);
-        //
-        frame.render_widget(new_footer, area_footer);
+        frame.render_widget(first_text, recters[0]);
+        frame.render_widget(second_text, recters[1]);
+        frame.render_widget(third_text, recters[2]);
+        frame.render_widget(new_footer, area_footer);  
     }
+
+    //if let CurrentScreen::new_screen = app.current_screen { //screen that is shown when creating a new task
+    //    //create a default of the Task struct that can be used to fill out the form
+    //    let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm";
+    //    let vertical = &Layout::vertical([
+    //        Constraint::Min(2), //1
+    //        Constraint::Min(2), //2
+    //        Constraint::Min(2), //3
+    //        Constraint::Min(2), //4
+    //        Constraint::Min(2), //5
+    //        Constraint::Min(2), //6
+    //        Constraint::Min(2), //7
+    //        Constraint::Length(3) //footer
+    //    ]);
+    //    let recters = vertical.split(frame.area());
+//
+    //    let fresh_data = Task {
+    //        ..Default::default()
+    //    };
+//
+    //    //let area_outer = recters[0];
+    //    let area_footer = recters[7];
+//
+    //    let new_footer = Paragraph::new(Line::from(footer_text))
+    //        .style(Style::new().bg(Color::Green).fg(Color::White))
+    //        .centered()
+    //        .block(
+    //            Block::bordered()
+    //                .border_type(BorderType::Double)
+    //                .border_style(Style::new().fg(Color::Blue)),
+    //        );
+    //    
+    //    let outer_block = Block::new()
+    //        .borders(Borders::ALL)
+    //        .border_type(BorderType::Rounded)
+    //        .title("New Entry");
+    //    
+    //    
+    //    // need the below seven times
+    //    //frame.render_widget(render_input_box(i32::from(1), &fresh_data), recters[0]);
+    //    //frame.render_widget(render_input_box(i32::from(2), &fresh_data), recters[1]);
+    //    //frame.render_widget(render_input_box(i32::from(3), &fresh_data), recters[2]);
+    //    //frame.render_widget(render_input_box(i32::from(4), &fresh_data), recters[3]);
+    //    //frame.render_widget(render_input_box(i32::from(5), &fresh_data), recters[4]);
+    //    //frame.render_widget(render_input_box(i32::from(6), &fresh_data), recters[5]);
+    //    //frame.render_widget(render_input_box(i32::from(7), &fresh_data), recters[6]);
+    //    //
+    //    frame.render_widget(new_footer, area_footer);
+    //}
 
     if let CurrentScreen::detail_screen = app.current_screen { //Detail Screen that shows further details and allows editing of the task
         let footer_text = "(Del) Exit Program / (Esc) Back / (Ent) Confirm Changes / (↑) Up / (↓) Down";
